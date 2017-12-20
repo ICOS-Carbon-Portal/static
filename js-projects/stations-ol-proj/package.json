@@ -1,0 +1,53 @@
+{
+  "name": "static",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Carbon Portal services not directly dependant on server",
+  "main": "gulpfile.js",
+  "scripts": {
+    "publish": "gulp publish",
+	"stations": "gulp stations",
+    "gulp": "gulp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/ICOS-Carbon-Portal/static.git"
+  },
+  "keywords": [
+    "ICOS",
+    "Carbon",
+    "Portal"
+  ],
+  "contributors": [
+    "Oleg Mirzov",
+    "Roger Groth"
+  ],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ICOS-Carbon-Portal/static/issues"
+  },
+  "homepage": "https://github.com/ICOS-Carbon-Portal/static#readme",
+  "devDependencies": {
+    "babel-preset-es2015": "^6.5.0",
+    "babelify": "^7.2.0",
+    "browserify": "^14.4.0",
+    "del": "^3.0.0",
+    "gulp": "^3.9.0",
+    "gulp-babel": "^7.0.0",
+    "gulp-jasmine": "^2.3.0",
+    "gulp-newer": "^1.3.0",
+    "gulp-uglify": "^3.0.0",
+    "vinyl-buffer": "^1.0.0",
+    "vinyl-source-stream": "^1.1.0"
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.13.0",
+    "file-saver": "^1.3.3",
+    "icos-cp-backend": "^0.3.4",
+    "ol": "^4.5.0",
+    "icos-cp-ol": "^0.1.0",
+    "proj4": "^2.4.4",
+    "topojson": "^3.0.2",
+    "whatwg-fetch": "^2.0.3"
+  }
+}
