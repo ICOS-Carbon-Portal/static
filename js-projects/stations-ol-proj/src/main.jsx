@@ -1,5 +1,5 @@
 import 'babel-polyfill';
-import {OL, getViewParams} from 'icos-cp-ol';
+import {OL, supportedSRIDs, getViewParams} from 'icos-cp-ol';
 import {getCountriesGeoJson, getCountryLookup, queryMeta} from './backend';
 import config from '../../common/config-urls';
 import {getStations} from './sparqlQueries';
@@ -25,7 +25,7 @@ import LayerControl from './controls/LayerControl';
 import ExportControl from './controls/ExportControl';
 
 
-const start = srid => {
+const start = (srid, mapOptions) => {
 	getCountryLookup().then(countryLookup => {
 		const epsgCode = 'EPSG:' + srid;
 
@@ -43,7 +43,7 @@ const start = srid => {
 		const layers = getLayers();
 		const controls = getControls(projection);
 
-		const map = new OL(projection, layers, controls, countryLookup);
+		const map = new OL(projection, layers, controls, countryLookup, mapOptions);
 
 		getCountriesGeoJson()
 			.then(countriesTopo => {
@@ -96,15 +96,29 @@ const searchParams = keyValpairs.reduce((acc, curr) => {
 }, {});
 
 const srid = searchParams.srid ? searchParams.srid : '3035';
-const allowedSRIDs = ['3035', '4326', '3857'];
+const mapOptions = {};
 
-if (allowedSRIDs.includes(srid)){
-	start(srid);
+if (searchParams.fitView) {
+	Object.assign(mapOptions, {fitView: searchParams.fitView === 'true'});
+}
+
+if (searchParams.zoom && searchParams.zoom.match(/^\d{1,2}$/)) {
+	Object.assign(mapOptions, {zoom: parseInt(searchParams.zoom)});
+}
+
+if (searchParams.center && searchParams.center.match(/^\d+,\d+$/)) {
+	Object.assign(mapOptions, {center: searchParams.center.split(',')});
+}
+
+if (supportedSRIDs.includes(srid)){
+	start(srid, mapOptions);
 } else {
 	const infoDiv = document.getElementById('map');
 	infoDiv.setAttribute('style', 'padding: 10px;');
-	infoDiv.innerHTML = "Illegal SRID. Must be one of these: " + allowedSRIDs.join(', ');
+	infoDiv.innerHTML = "Illegal SRID. Must be one of these: " + supportedSRIDs.join(', ');
 }
+
+
 
 const getLayers = () => {
 	return [
