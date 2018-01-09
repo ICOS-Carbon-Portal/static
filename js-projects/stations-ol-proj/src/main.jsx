@@ -98,16 +98,16 @@ const searchParams = keyValpairs.reduce((acc, curr) => {
 const srid = searchParams.srid ? searchParams.srid : '3035';
 const mapOptions = {};
 
-if (searchParams.fitView) {
-	Object.assign(mapOptions, {fitView: searchParams.fitView === 'true'});
-}
-
 if (searchParams.zoom && searchParams.zoom.match(/^\d{1,2}$/)) {
 	Object.assign(mapOptions, {zoom: parseInt(searchParams.zoom)});
 }
 
 if (searchParams.center && searchParams.center.match(/^\d+,\d+$/)) {
 	Object.assign(mapOptions, {center: searchParams.center.split(',')});
+}
+
+if (mapOptions.zoom && mapOptions.center) {
+	Object.assign(mapOptions, {fitView: false});
 }
 
 if (supportedSRIDs.includes(srid)){
