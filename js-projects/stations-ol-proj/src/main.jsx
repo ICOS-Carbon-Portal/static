@@ -103,7 +103,7 @@ if (searchParams.zoom && searchParams.zoom.match(/^\d{1,2}$/)) {
 }
 
 if (searchParams.center && searchParams.center.match(/^\d+,\d+$/)) {
-	Object.assign(mapOptions, {center: searchParams.center.split(',')});
+	Object.assign(mapOptions, {center: searchParams.center.split(',').map(p => parseInt(p))});
 }
 
 if (mapOptions.zoom && mapOptions.center) {
