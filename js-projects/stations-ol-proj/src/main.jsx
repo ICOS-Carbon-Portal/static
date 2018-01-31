@@ -25,7 +25,7 @@ import LayerControl from './controls/LayerControl';
 import ExportControl from './controls/ExportControl';
 
 
-const start = (srid, mapOptions) => {
+const start = (srid, mapOptions, layerVisibility) => {
 	getCountryLookup().then(countryLookup => {
 		const epsgCode = 'EPSG:' + srid;
 
@@ -72,12 +72,12 @@ const start = (srid, mapOptions) => {
 							.filter(s => !duplicates.some(d => d.id === s.id));
 						const shippingLines = stations.filterByAttr({type: 'line'});
 
-						map.addPoints('Ocean stations', 'toggle', stationPointsOS, styles.ptStyle('blue'));
-						map.addPoints('Ecosystem stations', 'toggle', stationPointsES, styles.ptStyle('green'));
-						map.addPoints('Atmosphere stations', 'toggle', stationPointsAS, styles.ptStyle('white'));
-						map.addPoints('Ecosystem-Atmosphere', 'toggle', duplicates, styles.ptStyle('green', 'white', 2, 5));
+						map.addPoints('Ocean stations', 'toggle', layerVisibility.os, stationPointsOS, styles.ptStyle('blue'));
+						map.addPoints('Ecosystem stations', 'toggle', layerVisibility.es, stationPointsES, styles.ptStyle('green'));
+						map.addPoints('Atmosphere stations', 'toggle', layerVisibility.as, stationPointsAS, styles.ptStyle('rgb(255,50,50)'));
+						map.addPoints('Ecosystem-Atmosphere', 'toggle', layerVisibility.eas, duplicates, styles.ptStyle('rgb(248,246,26)'));
 
-						shippingLines.forEach(sl => map.addGeoJson('Shipping lines', 'toggle', true, addProps(sl), styles.lnStyle));
+						shippingLines.forEach(sl => map.addGeoJson('Shipping lines', 'toggle', layerVisibility.ship, addProps(sl), styles.lnStyle));
 					});
 
 				if (epsgCode === 'EPSG:3035') {
@@ -96,22 +96,40 @@ const searchParams = keyValpairs.reduce((acc, curr) => {
 }, {});
 
 const srid = searchParams.srid ? searchParams.srid : '3035';
-const mapOptions = {};
-
-if (searchParams.zoom && searchParams.zoom.match(/^\d{1,2}$/)) {
-	Object.assign(mapOptions, {zoom: parseInt(searchParams.zoom)});
-}
-
-if (searchParams.center && searchParams.center.match(/^\d+,\d+$/)) {
-	Object.assign(mapOptions, {center: searchParams.center.split(',').map(p => parseInt(p))});
-}
-
-if (mapOptions.zoom && mapOptions.center) {
-	Object.assign(mapOptions, {fitView: false});
-}
 
 if (supportedSRIDs.includes(srid)){
-	start(srid, mapOptions);
+	const mapOptions = {};
+
+	if (searchParams.zoom && searchParams.zoom.match(/^\d{1,2}$/)) {
+		Object.assign(mapOptions, {zoom: parseInt(searchParams.zoom)});
+	}
+
+	if (searchParams.center && searchParams.center.match(/^(\d+(\.\d+)?),(\d+(\.\d+)?)$/)) {
+		Object.assign(mapOptions, {center: searchParams.center.split(',').map(p => parseFloat(p))});
+	}
+
+	if (mapOptions.zoom && mapOptions.center) {
+		Object.assign(mapOptions, {fitView: false});
+	}
+
+	const layerVisibility = {
+		os: true,
+		es: true,
+		as: true,
+		eas: true,
+		ship: true
+	};
+
+	const showParams = searchParams.show ? searchParams.show.split(',') : undefined;
+	if (showParams){
+		Object.keys(layerVisibility).forEach(key => layerVisibility[key] = false);
+
+		showParams.forEach(p => {
+			if (p in layerVisibility) layerVisibility[p] = true;
+		});
+	}
+
+	start(srid, mapOptions, layerVisibility);
 } else {
 	const infoDiv = document.getElementById('map');
 	infoDiv.setAttribute('style', 'padding: 10px;');
