@@ -1,10 +1,12 @@
 import Control from 'ol/control/control';
 
+
 export default class LayerControl extends Control {
 	constructor(rootElement, options = {}){
 		super(rootElement);
 
 		this._layerGroups = [];
+		this._defaultBaseMap = undefined;
 		this._layerCount = () => this._layerGroups.reduce((length, lg) => {
 			return length + lg.layers.length;
 		}, 0);
@@ -34,9 +36,17 @@ export default class LayerControl extends Control {
 		this.element.appendChild(this._layers);
 	}
 
+	setDefaultBaseMap(baseMap){
+		this._defaultBaseMap = baseMap;
+	}
+
+	get defaultBaseMap(){
+		return this._defaultBaseMap;
+	}
+
 	setMap(map){
 		super.setMap(map);
-		map.on('postrender', () => {
+		map.getLayers().on('add', () => {
 			const mapLayers = map.getLayers().getArray().filter(ml => ml.get('name'));
 
 			if (mapLayers.length > this._layerCount()) {
@@ -76,7 +86,7 @@ export default class LayerControl extends Control {
 
 			baseMaps.forEach(bm => {
 				const row = document.createElement('div');
-				const id = 'radio' + bm.name.replace(/ /g, "_");
+				const id = createId('radio', bm.name);
 				row.setAttribute('class', 'row');
 
 				const radio = document.createElement('input');
@@ -110,7 +120,7 @@ export default class LayerControl extends Control {
 			toggles.forEach(togg => {
 				const legendItem = this.getLegendItem(togg.layers[0]);
 				const row = document.createElement('div');
-				const id = 'toggle' + togg.name.replace(/ /g, "_");
+				const id = createId('toggle', togg.name);
 				row.setAttribute('class', 'row');
 
 				const toggle = document.createElement('input');
@@ -140,7 +150,7 @@ export default class LayerControl extends Control {
 	}
 
 	getLegendItem(layer){
-		const style = layer.getStyle();
+		const style = layer.getStyle ? layer.getStyle() : undefined;
 		const image = style ? style.getImage() : undefined;
 
 		return image ? image.canvas_ : undefined;
@@ -148,11 +158,7 @@ export default class LayerControl extends Control {
 
 	toggleBaseMaps(baseMapNameToActivate){
 		this._layerGroups.filter(lg => lg.layerType === 'baseMap').forEach(bm => {
-			if (bm.name === baseMapNameToActivate){
-				bm.layers[0].setVisible(true);
-			} else {
-				bm.layers[0].setVisible(false);
-			}
+			bm.layers[0].setVisible(bm.name === baseMapNameToActivate);
 		});
 	}
 
@@ -160,4 +166,45 @@ export default class LayerControl extends Control {
 		const layerGroup = this._layerGroups.find(lg => lg.name === name);
 		layerGroup.layers.forEach(layer => layer.setVisible(checked));
 	}
+
+	setChecked(searchParams, id2name){
+		const toggles = this._layerGroups.filter(lg => lg.layerType === 'toggle');
+
+		if (searchParams.hasOwnProperty('baseMap') && searchParams.baseMap.length) {
+			this.toggleInput('radio', searchParams.baseMap, true);
+		} else {
+			this.toggleInput('radio', this._defaultBaseMap, true);
+		}
+
+		if (searchParams.hasOwnProperty('show')){
+			if (searchParams.show.length) {
+				const toggleNamesToShow = searchParams.show.split(',').map(id => id2name(id));
+
+				toggles.forEach(toggle => {
+					this.toggleInput('toggle', toggle.name, toggleNamesToShow.includes(toggle.name));
+				});
+			} else {
+				toggles.forEach(toggle => {
+					this.toggleInput('toggle', toggle.name, false);
+				});
+			}
+		} else {
+			toggles.forEach(toggle => {
+				this.toggleInput('toggle', toggle.name, true);
+			});
+		}
+	}
+
+	toggleInput(ctrlType, name, isChecked) {
+		const input = document.getElementById(createId(ctrlType, name));
+		if (input) input.checked = isChecked;
+	};
+
+	get isLayerControl(){
+		return true;
+	}
 }
+
+const createId = (ctrlType, name) => {
+	return ctrlType + name.replace(/ /g, "_");
+};

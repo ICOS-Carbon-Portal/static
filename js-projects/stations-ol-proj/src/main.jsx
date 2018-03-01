@@ -1,5 +1,5 @@
 import 'babel-polyfill';
-import {OL, supportedSRIDs, getViewParams} from 'icos-cp-ol';
+import {OL, supportedSRIDs, getViewParams, getSearchParams} from 'icos-cp-ol';
 import {getCountriesGeoJson, getCountryLookup, queryMeta} from './backend';
 import config from '../../common/config-urls';
 import {getStations} from './sparqlQueries';
@@ -40,16 +40,17 @@ const start = (srid, mapOptions, layerVisibility) => {
 			}));
 		}
 		const projection = proj.get(epsgCode);
-		const layers = getLayers();
+
+		const baseMaps = getBaseMapLayers(mapOptions.baseMap);
 		const controls = getControls(projection);
 
-		const map = new OL(projection, layers, controls, countryLookup, mapOptions);
+		const ol = new OL(projection, baseMaps, controls, countryLookup, mapOptions);
 
 		getCountriesGeoJson()
 			.then(countriesTopo => {
 				const styles = getStyles();
 
-				map.addGeoJson('Countries', 'baseMap', false, countriesTopo, styles.countryBorderStyle, false);
+				ol.addGeoJson('Countries', 'baseMap', mapOptions.baseMap === 'Countries', countriesTopo, styles.countryBorderStyle, false);
 
 				queryMeta(getStations(config))
 					.then(sparqlResult => {
@@ -72,44 +73,78 @@ const start = (srid, mapOptions, layerVisibility) => {
 							.filter(s => !duplicates.some(d => d.id === s.id));
 						const shippingLines = stations.filterByAttr({type: 'line'});
 
-						map.addPoints('Ocean stations', 'toggle', layerVisibility.os, stationPointsOS, styles.ptStyle('blue'));
-						map.addPoints('Ecosystem stations', 'toggle', layerVisibility.es, stationPointsES, styles.ptStyle('green'));
-						map.addPoints('Atmosphere stations', 'toggle', layerVisibility.as, stationPointsAS, styles.ptStyle('rgb(255,50,50)'));
-						map.addPoints('Ecosystem-Atmosphere', 'toggle', layerVisibility.eas, duplicates, styles.ptStyle('rgb(248,246,26)'));
-
-						shippingLines.forEach(sl => map.addGeoJson('Shipping lines', 'toggle', layerVisibility.ship, addProps(sl), styles.lnStyle));
+						const toggleLayers = [
+							{
+								id: 'os',
+								type: 'point',
+								name: 'Ocean stations',
+								visible: layerVisibility.os,
+								data: stationPointsOS,
+								style: styles.ptStyle('blue')
+							},
+							{
+								id: 'es',
+								type: 'point',
+								name: 'Ecosystem stations',
+								visible: layerVisibility.es,
+								data: stationPointsES,
+								style: styles.ptStyle('green')
+							},
+							{
+								id: 'as',
+								type: 'point',
+								name: 'Atmosphere stations',
+								visible: layerVisibility.as,
+								data: stationPointsAS,
+								style: styles.ptStyle('rgb(255,50,50)')
+							},
+							{
+								id: 'eas',
+								type: 'point',
+								name: 'Ecosystem-Atmosphere',
+								visible: layerVisibility.eas,
+								data: duplicates,
+								style: styles.ptStyle('rgb(248,246,26)')
+							},
+							{
+								id: 'ship',
+								type: 'geojson',
+								name: 'Shipping lines',
+								visible: layerVisibility.ship,
+								data: shippingLines.map(sl => addProps(sl)),
+								style: styles.lnStyle
+							}
+						];
+						ol.addToggleLayers(toggleLayers);
 					});
 
 				if (epsgCode === 'EPSG:3035') {
-					map.outlineExtent(projection);
+					ol.outlineExtent(projection);
 				}
 			});
 	});
 };
 
-const searchStr = window.decodeURIComponent(window.location.search).replace(/^\?/, '');
-const keyValpairs = searchStr.split('&');
-const searchParams = keyValpairs.reduce((acc, curr) => {
-	const p = curr.split('=');
-	acc[p[0]] = p[1];
-	return acc;
-}, {});
-
+const searchParams = getSearchParams();
 const srid = searchParams.srid ? searchParams.srid : '3035';
 
 if (supportedSRIDs.includes(srid)){
-	const mapOptions = {};
+	const mapOptions = {updateURL: true};
 
 	if (searchParams.zoom && searchParams.zoom.match(/^\d{1,2}$/)) {
-		Object.assign(mapOptions, {zoom: parseInt(searchParams.zoom)});
+		mapOptions.zoom = parseInt(searchParams.zoom);
 	}
 
 	if (searchParams.center && searchParams.center.match(/^(\d+(\.\d+)?),(\d+(\.\d+)?)$/)) {
-		Object.assign(mapOptions, {center: searchParams.center.split(',').map(p => parseFloat(p))});
+		mapOptions.center = searchParams.center.split(',').map(p => parseFloat(p));
 	}
 
 	if (mapOptions.zoom && mapOptions.center) {
-		Object.assign(mapOptions, {fitView: false});
+		mapOptions.fitView = false;
+	}
+
+	if (searchParams.baseMap){
+		mapOptions.baseMap = decodeURIComponent(searchParams.baseMap);
 	}
 
 	const layerVisibility = {
@@ -120,7 +155,7 @@ if (supportedSRIDs.includes(srid)){
 		ship: true
 	};
 
-	const showParams = searchParams.show ? searchParams.show.split(',') : undefined;
+	const showParams = searchParams.hasOwnProperty('show') ? searchParams.show.split(',') : undefined;
 	if (showParams){
 		Object.keys(layerVisibility).forEach(key => layerVisibility[key] = false);
 
@@ -137,69 +172,70 @@ if (supportedSRIDs.includes(srid)){
 }
 
 
+const getBaseMapLayers = (selectedtBaseMap) => {
+	const getNewTile = (name, defaultVisibility, source) => {
+		return new Tile({
+			visible: selectedtBaseMap ? name === selectedtBaseMap : defaultVisibility,
+			name,
+			layerType: 'baseMap',
+			source
+		});
+	};
 
-const getLayers = () => {
 	return [
-		new Tile({
-			visible: false,
-			name: 'OpenStreetMap',
-			layerType: 'baseMap',
-			source: new OSM({crossOrigin: 'anonymous'})
-		}),
-		new Tile({
-			visible: false,
-			name: 'Watercolor',
-			layerType: 'baseMap',
-			source: new Stamen({
+		getNewTile(
+			'OpenStreetMap',
+			false,
+			new OSM({crossOrigin: 'anonymous'})
+		),
+		getNewTile(
+			'Watercolor',
+			false,
+			new Stamen({
 				layer: 'watercolor',
 				crossOrigin: 'anonymous'
 			})
-		}),
-		new Tile({
-			visible: false,
-			name: 'Imagery',
-			layerType: 'baseMap',
-			source: new XYZ({
+		),
+		getNewTile(
+			'Imagery',
+			false,
+			new XYZ({
 				url: '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
 				crossOrigin: 'anonymous'
 			})
-		}),
-		new Tile({
-			visible: false,
-			name: 'Topology',
-			layerType: 'baseMap',
-			source: new XYZ({
+		),
+		getNewTile(
+			'Topography',
+			false,
+			new XYZ({
 				url: '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
 				crossOrigin: 'anonymous'
 			})
-		}),
-		new Tile({
-			visible: false,
-			name: 'Ocean',
-			layerType: 'baseMap',
-			source: new XYZ({
+		),
+		getNewTile(
+			'Ocean',
+			false,
+			new XYZ({
 				url: '//server.arcgisonline.com/arcgis/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}',
 				crossOrigin: 'anonymous'
 			})
-		}),
-		new Tile({
-			visible: false,
-			name: 'Shaded relief',
-			layerType: 'baseMap',
-			source: new XYZ({
+		),
+		getNewTile(
+			'Shaded relief',
+			false,
+			new XYZ({
 				url: '//server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
 				crossOrigin: 'anonymous'
 			})
-		}),
-		new Tile({
-			visible: true,
-			name: 'Natural Earth',
-			layerType: 'baseMap',
-			source: new TileJSON({
+		),
+		getNewTile(
+			'Natural Earth',
+			true,
+			new TileJSON({
 				url: 'https://api.tiles.mapbox.com/v3/mapbox.natural-earth-hypso-bathy.json?secure',
 				crossOrigin: 'anonymous'
 			})
-		})
+		)
 	];
 };
 
