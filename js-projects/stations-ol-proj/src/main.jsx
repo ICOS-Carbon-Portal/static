@@ -1,5 +1,6 @@
 import 'babel-polyfill';
 import {OL, supportedSRIDs, getViewParams, getSearchParams} from 'icos-cp-ol';
+// import {OL, supportedSRIDs, getViewParams, getSearchParams} from './OL';
 import {getCountriesGeoJson, getCountryLookup, queryMeta} from './backend';
 import config from '../../common/config-urls';
 import {getStations} from './sparqlQueries';
@@ -21,7 +22,8 @@ import ZoomSlider from 'ol/control/zoomslider';
 import ScaleLine from 'ol/control/scaleline';
 // import MousePosition from 'ol/control/mouseposition';
 import ZoomToExtent from 'ol/control/zoomtoextent';
-import LayerControl from './controls/LayerControl';
+import {LayerControl} from 'icos-cp-ol';
+// import LayerControl from './controls/LayerControl';
 import ExportControl from './controls/ExportControl';
 
 
@@ -50,7 +52,7 @@ const start = (srid, mapOptions, layerVisibility) => {
 			.then(countriesTopo => {
 				const styles = getStyles();
 
-				ol.addGeoJson('Countries', 'baseMap', mapOptions.baseMap === 'Countries', countriesTopo, styles.countryBorderStyle, false);
+				ol.addGeoJson('Countries', 'baseMap', mapOptions.baseMap === 'Countries', countriesTopo, styles.countryStyle, false);
 
 				queryMeta(getStations(config))
 					.then(sparqlResult => {
@@ -74,6 +76,15 @@ const start = (srid, mapOptions, layerVisibility) => {
 						const shippingLines = stations.filterByAttr({type: 'line'});
 
 						const toggleLayers = [
+							{
+								id: 'bdr',
+								type: 'geojson',
+								name: 'Country borders',
+								interactive: false,
+								visible: layerVisibility.bdr,
+								data: countriesTopo,
+								style: styles.countryBorderStyle
+							},
 							{
 								id: 'os',
 								type: 'point',
@@ -152,7 +163,8 @@ if (supportedSRIDs.includes(srid)){
 		es: true,
 		as: true,
 		eas: true,
-		ship: true
+		ship: true,
+		bdr: true
 	};
 
 	const showParams = searchParams.hasOwnProperty('show') ? searchParams.show.split(',') : undefined;
@@ -257,7 +269,7 @@ const getControls = projection => {
 
 const getStyles = () => {
 	return {
-		countryBorderStyle: new Style({
+		countryStyle: new Style({
 			fill: new Fill({
 				color: 'rgb(205,170,102)'
 			}),
@@ -266,6 +278,20 @@ const getStyles = () => {
 				width: 1
 			})
 		}),
+		countryBorderStyle: [
+			new Style({
+				stroke: new Stroke({
+					color: 'rgb(175,175,175)',
+					width: 3
+				})
+			}),
+			new Style({
+				stroke: new Stroke({
+					color: 'rgb(50,50,50)',
+					width: 1
+				})
+			})
+		],
 		ptStyle: (fillColor, strokeColor = 'black', strokeWidth = 1, radius = 4) => new Style({
 			image: new Circle({
 				radius,

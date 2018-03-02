@@ -151,7 +151,7 @@ export default class LayerControl extends Control {
 
 	getLegendItem(layer){
 		const style = layer.getStyle ? layer.getStyle() : undefined;
-		const image = style ? style.getImage() : undefined;
+		const image = style && style.getImage ? style.getImage() : undefined;
 
 		return image ? image.canvas_ : undefined;
 	}
