@@ -114,8 +114,8 @@ const exportMap = (map, event, withLegend) => {
 		ctx.textBaseline = 'middle';
 
 		toggleLayers.forEach(l => {
-			const style = l.getStyle();
-			const image = style ? style.getImage() : undefined;
+			const style = l.getStyle ? l.getStyle() : undefined;
+			const image = style && style.getImage ? style.getImage() : undefined;
 			const canvasImage = image ? image.canvas_ : undefined;
 
 			if (canvasImage) {
