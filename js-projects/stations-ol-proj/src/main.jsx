@@ -23,8 +23,9 @@ import ScaleLine from 'ol/control/scaleline';
 // import MousePosition from 'ol/control/mouseposition';
 import ZoomToExtent from 'ol/control/zoomtoextent';
 import {LayerControl} from 'icos-cp-ol';
-// import LayerControl from './controls/LayerControl';
+// import {LayerControl} from './controls/LayerControl';
 import ExportControl from './controls/ExportControl';
+import StationFilter from "./models/StationFilter";
 
 
 const start = (srid, mapOptions, layerVisibility) => {
@@ -45,8 +46,9 @@ const start = (srid, mapOptions, layerVisibility) => {
 
 		const baseMaps = getBaseMapLayers(mapOptions.baseMap);
 		const controls = getControls(projection);
+		const layerControl = new LayerControl(document.getElementById('layerCtrl'));
 
-		const ol = new OL(projection, baseMaps, controls, countryLookup, mapOptions);
+		const ol = new OL(projection, baseMaps, controls.concat([layerControl]), countryLookup, mapOptions);
 
 		getCountriesGeoJson()
 			.then(countriesTopo => {
@@ -127,12 +129,31 @@ const start = (srid, mapOptions, layerVisibility) => {
 							}
 						];
 						ol.addToggleLayers(toggleLayers);
+
+						const stationFilter = new StationFilter(toggleLayers, countryLookup, filterPoints);
+						layerControl.addCountrySelectors(stationFilter, ol);
 					});
 
 				if (epsgCode === 'EPSG:3035') {
 					ol.outlineExtent(projection);
 				}
 			});
+	});
+};
+
+const filterPoints = (stationFilter, selected, ol) => {
+	const stationsToFilter = stationFilter.stationsToFilter;
+	const stationNames = stationsToFilter.map(themeStations => themeStations.name);
+	const toggleLayers = ol.getToggleLayers();
+
+	toggleLayers.forEach(vectorLayer => {
+		if (stationNames.includes(vectorLayer.get('name'))) {
+			const vectorSource = vectorLayer.getSource();
+			const points = stationsToFilter.find (theme => theme.name === vectorLayer.get('name')).data;
+			const filteredPoints = points.filter(p => selected === "0" || p.Country === selected);
+			vectorSource.clear();
+			vectorSource.addFeatures(ol.pointsToFeatures(filteredPoints));
+		}
 	});
 };
 
@@ -262,7 +283,6 @@ const getControls = projection => {
 		// 	coordinateFormat: coord => `X: ${coord[0].toFixed(0)}, Y: ${coord[1].toFixed(0)}`
 		// }),
 		new ZoomToExtent({extent: getViewParams(projection.getCode()).extent}),
-		new LayerControl(document.getElementById('layerCtrl')),
 		new ExportControl(document.getElementById('exportCtrl')),
 	];
 };
