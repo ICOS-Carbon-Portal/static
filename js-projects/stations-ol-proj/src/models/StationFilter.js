@@ -1,6 +1,6 @@
 export default class StationFilter{
 	constructor(toggleLayers, countryLookup, filterFn){
-		this.stationsToFilter = toggleLayers.filter(tl => tl.type === 'point');
+		this.stationsToFilter = toggleLayers.filter(tl => tl.type === 'point' || tl.id === 'ship');
 		this.countryList = this.getCountryList(countryLookup);
 		this.filterFn = filterFn;
 	}
@@ -8,7 +8,14 @@ export default class StationFilter{
 	getCountryList(countryLookup){
 		const iso2Filtered = this.stationsToFilter.reduce((acc, theme) => {
 			const stations = theme.data;
-			stations.forEach(station => acc.add(station.Country));
+
+			stations.forEach(station => {
+				if (station.Country) {
+					acc.add(station.Country);
+				} else {
+					acc.add(station.properties.Country);
+				}
+			});
 			return acc;
 		}, new Set());
 

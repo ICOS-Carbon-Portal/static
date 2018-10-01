@@ -54,7 +54,7 @@ const start = (srid, mapOptions, layerVisibility) => {
 			.then(countriesTopo => {
 				const styles = getStyles();
 
-				ol.addGeoJson('Countries', 'baseMap', mapOptions.baseMap === 'Countries', countriesTopo, styles.countryStyle, false);
+				ol.addGeoJson('borders', 'Countries', 'baseMap', mapOptions.baseMap === 'Countries', countriesTopo, styles.countryStyle, false);
 
 				queryMeta(getStations(config))
 					.then(sparqlResult => {
@@ -128,9 +128,10 @@ const start = (srid, mapOptions, layerVisibility) => {
 								style: styles.lnStyle
 							}
 						];
+
 						ol.addToggleLayers(toggleLayers);
 
-						const stationFilter = new StationFilter(toggleLayers, countryLookup, filterPoints);
+						const stationFilter = new StationFilter(toggleLayers, countryLookup, filterFeatures);
 						layerControl.addCountrySelectors(stationFilter, ol);
 					});
 
@@ -141,18 +142,32 @@ const start = (srid, mapOptions, layerVisibility) => {
 	});
 };
 
-const filterPoints = (stationFilter, selected, ol) => {
+const filterFeatures = (stationFilter, selected, ol) => {
 	const stationsToFilter = stationFilter.stationsToFilter;
 	const stationNames = stationsToFilter.map(themeStations => themeStations.name);
 	const toggleLayers = ol.getToggleLayers();
 
-	toggleLayers.forEach(vectorLayer => {
-		if (stationNames.includes(vectorLayer.get('name'))) {
-			const vectorSource = vectorLayer.getSource();
-			const points = stationsToFilter.find (theme => theme.name === vectorLayer.get('name')).data;
-			const filteredPoints = points.filter(p => selected === "0" || p.Country === selected);
-			vectorSource.clear();
-			vectorSource.addFeatures(ol.pointsToFeatures(filteredPoints));
+	toggleLayers.forEach(layer => {
+		if (stationNames.includes(layer.get('name'))) {
+
+			if (layer.type === 'VECTOR') {
+				// points
+				const vectorSource = layer.getSource();
+				const points = stationsToFilter.find(theme => theme.name === layer.get('name')).data;
+				const filteredPoints = points.filter(p => selected === "0" || p.Country === selected);
+				vectorSource.clear();
+				vectorSource.addFeatures(ol.pointsToFeatures(filteredPoints));
+			} else {
+				// shipping lines
+				const groupLayers = layer.getLayers();
+				const lines = stationsToFilter.find(theme => theme.name === layer.get('name')).data;
+
+				groupLayers.forEach(l => {
+					const filteredLines = lines.filter(p => selected === "0" || p.properties.Country === selected);
+					const ids = filteredLines.map(l => l.properties.id);
+					l.setVisible(ids.includes(l.get('id')));
+				});
+			}
 		}
 	});
 };
