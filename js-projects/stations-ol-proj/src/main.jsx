@@ -3,7 +3,7 @@ import {OL, supportedSRIDs, getViewParams, getSearchParams} from 'icos-cp-ol';
 // import {OL, supportedSRIDs, getViewParams, getSearchParams} from './OL';
 import {getCountriesGeoJson, getCountryLookup, queryMeta} from './backend';
 import config from '../../common/config-urls';
-import {getStations} from './sparqlQueries';
+import {getStations, getIcosStations} from './sparqlQueries';
 import Stations from './models/Stations';
 import Style from 'ol/style/style';
 import Fill from 'ol/style/fill';
@@ -28,7 +28,56 @@ import ExportControl from './controls/ExportControl';
 import StationFilter from "./models/StationFilter";
 
 
-const start = (srid, mapOptions, layerVisibility) => {
+const searchParams = getSearchParams();
+const srid = searchParams.srid ? searchParams.srid : '3035';
+
+const stationsQuery = searchParams.icosMeta ? getIcosStations : getStations(config);
+
+if (supportedSRIDs.includes(srid)){
+	const mapOptions = {updateURL: true};
+
+	if (searchParams.zoom && searchParams.zoom.match(/^\d{1,2}$/)) {
+		mapOptions.zoom = parseInt(searchParams.zoom);
+	}
+
+	if (searchParams.center && searchParams.center.match(/^(\d+(\.\d+)?),(\d+(\.\d+)?)$/)) {
+		mapOptions.center = searchParams.center.split(',').map(p => parseFloat(p));
+	}
+
+	if (mapOptions.zoom && mapOptions.center) {
+		mapOptions.fitView = false;
+	}
+
+	if (searchParams.baseMap){
+		mapOptions.baseMap = decodeURIComponent(searchParams.baseMap);
+	}
+
+	const layerVisibility = {
+		os: true,
+		es: true,
+		as: true,
+		eas: true,
+		ship: true,
+		bdr: true
+	};
+
+	const showParams = searchParams.hasOwnProperty('show') ? searchParams.show.split(',') : undefined;
+	if (showParams){
+		Object.keys(layerVisibility).forEach(key => layerVisibility[key] = false);
+
+		showParams.forEach(p => {
+			if (p in layerVisibility) layerVisibility[p] = true;
+		});
+	}
+
+	start(srid, mapOptions, layerVisibility);
+} else {
+	const infoDiv = document.getElementById('map');
+	infoDiv.setAttribute('style', 'padding: 10px;');
+	infoDiv.innerHTML = "Illegal SRID. Must be one of these: " + supportedSRIDs.join(', ');
+}
+
+function start(srid, mapOptions, layerVisibility) {
 	getCountryLookup().then(countryLookup => {
 		const epsgCode = 'EPSG:' + srid;
 
@@ -56,7 +105,7 @@ const start = (srid, mapOptions, layerVisibility) => {
 
 				ol.addGeoJson('borders', 'Countries', 'baseMap', mapOptions.baseMap === 'Countries', countriesTopo, styles.countryStyle, false);
 
-				queryMeta(getStations(config))
+				queryMeta(stationsQuery)
 					.then(sparqlResult => {
 
 						const transformPointFn = projection.getCode() === 'EPSG:4326'
@@ -142,7 +191,7 @@ const start = (srid, mapOptions, layerVisibility) => {
 	});
 };
 
-const filterFeatures = (stationFilter, selected, ol) => {
+function filterFeatures(stationFilter, selected, ol) {
 	const stationsToFilter = stationFilter.stationsToFilter;
 	const stationNames = stationsToFilter.map(themeStations => themeStations.name);
 	const toggleLayers = ol.getToggleLayers();
@@ -172,55 +221,7 @@ const filterFeatures = (stationFilter, selected, ol) => {
 	});
 };
 
-const searchParams = getSearchParams();
-const srid = searchParams.srid ? searchParams.srid : '3035';
-
-if (supportedSRIDs.includes(srid)){
-	const mapOptions = {updateURL: true};
-
-	if (searchParams.zoom && searchParams.zoom.match(/^\d{1,2}$/)) {
-		mapOptions.zoom = parseInt(searchParams.zoom);
-	}
-
-	if (searchParams.center && searchParams.center.match(/^(\d+(\.\d+)?),(\d+(\.\d+)?)$/)) {
-		mapOptions.center = searchParams.center.split(',').map(p => parseFloat(p));
-	}
-
-	if (mapOptions.zoom && mapOptions.center) {
-		mapOptions.fitView = false;
-	}
-
-	if (searchParams.baseMap){
-		mapOptions.baseMap = decodeURIComponent(searchParams.baseMap);
-	}
-
-	const layerVisibility = {
-		os: true,
-		es: true,
-		as: true,
-		eas: true,
-		ship: true,
-		bdr: true
-	};
-
-	const showParams = searchParams.hasOwnProperty('show') ? searchParams.show.split(',') : undefined;
-	if (showParams){
-		Object.keys(layerVisibility).forEach(key => layerVisibility[key] = false);
-
-		showParams.forEach(p => {
-			if (p in layerVisibility) layerVisibility[p] = true;
-		});
-	}
-
-	start(srid, mapOptions, layerVisibility);
-} else {
-	const infoDiv = document.getElementById('map');
-	infoDiv.setAttribute('style', 'padding: 10px;');
-	infoDiv.innerHTML = "Illegal SRID. Must be one of these: " + supportedSRIDs.join(', ');
-}
-
-
-const getBaseMapLayers = (selectedtBaseMap) => {
+function getBaseMapLayers(selectedtBaseMap){
 	const getNewTile = (name, defaultVisibility, source) => {
 		return new Tile({
 			visible: selectedtBaseMap ? name === selectedtBaseMap : defaultVisibility,
@@ -287,7 +288,7 @@ const getBaseMapLayers = (selectedtBaseMap) => {
 	];
 };
 
-const getControls = projection => {
+function getControls(projection) {
 	return [
 		new Zoom(),
 		new ZoomSlider(),
@@ -302,7 +303,7 @@ const getControls = projection => {
 	];
 };
 
-const getStyles = () => {
+function getStyles() {
 	return {
 		countryStyle: new Style({
 			fill: new Fill({
@@ -344,7 +345,7 @@ const getStyles = () => {
 	};
 };
 
-const addProps = feature => {
+function addProps(feature) {
 	const props = Object.keys(feature).reduce((acc, key) => {
 		if (key !== 'geoJson' && feature[key]){
 			acc[key] = feature[key];

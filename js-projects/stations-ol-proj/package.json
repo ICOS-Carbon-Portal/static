@@ -6,7 +6,7 @@
   "main": "gulpfile.js",
   "scripts": {
     "publish": "gulp publish",
-	"stations": "gulp stations",
+    "stations": "gulp stations",
     "gulp": "gulp"
   },
   "repository": {
