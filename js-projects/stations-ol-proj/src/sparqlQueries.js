@@ -46,6 +46,7 @@ where {
    {
    select ?s (GROUP_CONCAT(?piLastName; separator=";") AS ?PI_names) where{
      ?memb a cpmeta:Membership .
+     FILTER NOT EXISTS {?memb cpmeta:hasEndTime []}
      ?memb cpmeta:hasRole <http://meta.icos-cp.eu/resources/roles/PI> .
      ?memb cpmeta:atOrganization ?s .
      ?pi cpmeta:hasMembership ?memb .
