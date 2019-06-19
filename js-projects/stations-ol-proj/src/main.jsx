@@ -28,6 +28,54 @@ import ExportControl from './controls/ExportControl';
 import StationFilter from "./models/StationFilter";
 
 
+const availableBaseMaps = [
+	{
+		name: 'OpenStreetMap',
+		defaultVisibility: false,
+		source: new OSM({crossOrigin: 'anonymous'})
+	},
+	{
+		name: 'Watercolor',
+		defaultVisibility: false,
+		source: new Stamen({
+			layer: 'watercolor',
+			crossOrigin: 'anonymous'
+		})
+	},
+	{
+		name: 'Imagery',
+		defaultVisibility: false,
+		source: new XYZ({
+			url: '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+			crossOrigin: 'anonymous'
+		})
+	},
+	{
+		name: 'Topography',
+		defaultVisibility: false,
+		source: new XYZ({
+			url: '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+			crossOrigin: 'anonymous'
+		})
+	},
+	{
+		name: 'Ocean',
+		defaultVisibility: false,
+		source: new XYZ({
+			url: '//server.arcgisonline.com/arcgis/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}',
+			crossOrigin: 'anonymous'
+		})
+	},
+	{
+		name: 'Shaded relief',
+		defaultVisibility: true,
+		source: new XYZ({
+			url: '//server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
+			crossOrigin: 'anonymous'
+		})
+	}
+];
+
 const searchParams = getSearchParams();
 const srid = searchParams.srid ? searchParams.srid : '3035';
 
@@ -49,7 +97,9 @@ if (supportedSRIDs.includes(srid)){
 	}
 
 	if (searchParams.baseMap){
-		mapOptions.baseMap = decodeURIComponent(searchParams.baseMap);
+		mapOptions.baseMap = availableBaseMaps.find(bm => bm.name === searchParams.baseMap)
+			? decodeURIComponent(searchParams.baseMap)
+			: availableBaseMaps.find(bm => bm.defaultVisibility).name;
 	}
 
 	const layerVisibility = {
@@ -222,7 +272,7 @@ function filterFeatures(stationFilter, selected, ol) {
 };
 
 function getBaseMapLayers(selectedtBaseMap){
-	const getNewTile = (name, defaultVisibility, source) => {
+	const getNewTile = ({name, defaultVisibility, source}) => {
 		return new Tile({
 			visible: selectedtBaseMap ? name === selectedtBaseMap : defaultVisibility,
 			name,
@@ -231,61 +281,7 @@ function getBaseMapLayers(selectedtBaseMap){
 		});
 	};
 
-	return [
-		getNewTile(
-			'OpenStreetMap',
-			false,
-			new OSM({crossOrigin: 'anonymous'})
-		),
-		getNewTile(
-			'Watercolor',
-			false,
-			new Stamen({
-				layer: 'watercolor',
-				crossOrigin: 'anonymous'
-			})
-		),
-		getNewTile(
-			'Imagery',
-			false,
-			new XYZ({
-				url: '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-				crossOrigin: 'anonymous'
-			})
-		),
-		getNewTile(
-			'Topography',
-			false,
-			new XYZ({
-				url: '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-				crossOrigin: 'anonymous'
-			})
-		),
-		getNewTile(
-			'Ocean',
-			false,
-			new XYZ({
-				url: '//server.arcgisonline.com/arcgis/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}',
-				crossOrigin: 'anonymous'
-			})
-		),
-		getNewTile(
-			'Shaded relief',
-			false,
-			new XYZ({
-				url: '//server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
-				crossOrigin: 'anonymous'
-			})
-		),
-		getNewTile(
-			'Natural Earth',
-			true,
-			new TileJSON({
-				url: 'https://api.tiles.mapbox.com/v3/mapbox.natural-earth-hypso-bathy.json?secure',
-				crossOrigin: 'anonymous'
-			})
-		)
-	];
+	return availableBaseMaps.map(bm => getNewTile(bm));
 };
 
 function getControls(projection) {
