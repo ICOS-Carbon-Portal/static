@@ -67,8 +67,16 @@ const availableBaseMaps = [
 		})
 	},
 	{
-		name: 'Shaded relief',
+		name: 'Physical',
 		defaultVisibility: true,
+		source: new XYZ({
+			url: '//server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}',
+			crossOrigin: 'anonymous'
+		})
+	},
+	{
+		name: 'Shaded relief',
+		defaultVisibility: false,
 		source: new XYZ({
 			url: '//server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
 			crossOrigin: 'anonymous'
