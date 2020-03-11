@@ -1,88 +1,23 @@
 import 'babel-polyfill';
 import {OL, supportedSRIDs, getViewParams, getSearchParams} from 'icos-cp-ol';
-// import {OL, supportedSRIDs, getViewParams, getSearchParams} from './OL';
 import {getCountriesGeoJson, getCountryLookup, queryMeta} from './backend';
 import config from '../../common/config-urls';
 import {getStations, getIcosStations} from './sparqlQueries';
 import Stations from './models/Stations';
-import Style from 'ol/style/style';
-import Fill from 'ol/style/fill';
-import Stroke from 'ol/style/stroke';
-import Circle from 'ol/style/circle';
 import Tile from 'ol/layer/tile';
-import OSM from 'ol/source/osm';
-import Stamen from 'ol/source/stamen';
-import XYZ from 'ol/source/xyz';
-import TileJSON from 'ol/source/tilejson';
 import proj from 'ol/proj';
 import Projection from 'ol/proj/projection';
 import proj4 from 'proj4';
 import Zoom from 'ol/control/zoom';
 import ZoomSlider from 'ol/control/zoomslider';
 import ScaleLine from 'ol/control/scaleline';
-// import MousePosition from 'ol/control/mouseposition';
 import ZoomToExtent from 'ol/control/zoomtoextent';
 import {LayerControl} from 'icos-cp-ol';
-// import {LayerControl} from './controls/LayerControl';
 import ExportControl from './controls/ExportControl';
 import StationFilter from "./models/StationFilter";
+import availableBaseMaps from "./basemaps";
+import styles from "./styles";
 
-
-const availableBaseMaps = [
-	{
-		name: 'OpenStreetMap',
-		defaultVisibility: false,
-		source: new OSM({crossOrigin: 'anonymous'})
-	},
-	{
-		name: 'Watercolor',
-		defaultVisibility: false,
-		source: new Stamen({
-			layer: 'watercolor',
-			crossOrigin: 'anonymous'
-		})
-	},
-	{
-		name: 'Imagery',
-		defaultVisibility: false,
-		source: new XYZ({
-			url: '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-			crossOrigin: 'anonymous'
-		})
-	},
-	{
-		name: 'Topography',
-		defaultVisibility: false,
-		source: new XYZ({
-			url: '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
-			crossOrigin: 'anonymous'
-		})
-	},
-	{
-		name: 'Ocean',
-		defaultVisibility: false,
-		source: new XYZ({
-			url: '//server.arcgisonline.com/arcgis/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}',
-			crossOrigin: 'anonymous'
-		})
-	},
-	{
-		name: 'Physical',
-		defaultVisibility: true,
-		source: new XYZ({
-			url: '//server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}',
-			crossOrigin: 'anonymous'
-		})
-	},
-	{
-		name: 'Shaded relief',
-		defaultVisibility: false,
-		source: new XYZ({
-			url: '//server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
-			crossOrigin: 'anonymous'
-		})
-	}
-];
 
 const searchParams = getSearchParams();
 const srid = searchParams.srid ? searchParams.srid : '3035';
@@ -155,99 +90,107 @@ function start(srid, mapOptions, layerVisibility) {
 		const controls = getControls(projection);
 		const layerControl = new LayerControl(document.getElementById('layerCtrl'));
 
-		const ol = new OL(projection, baseMaps, controls.concat([layerControl]), countryLookup, mapOptions);
+		return {
+			ol: new OL(projection, baseMaps, controls.concat([layerControl]), countryLookup, mapOptions),
+			countryLookup,
+			layerControl,
+			projection
+		};
 
-		getCountriesGeoJson()
-			.then(countriesTopo => {
-				const styles = getStyles();
+	}).then(({ol, countryLookup, layerControl, projection}) => {
+		return getCountriesGeoJson().then(countriesTopo => {
+			ol.addGeoJson('borders', 'Countries', 'baseMap', mapOptions.baseMap === 'Countries', countriesTopo, styles.countryStyle, false);
 
-				ol.addGeoJson('borders', 'Countries', 'baseMap', mapOptions.baseMap === 'Countries', countriesTopo, styles.countryStyle, false);
+			return {
+				ol,
+				countryLookup,
+				layerControl,
+				projection,
+				countriesTopo
+			};
+		});
 
-				queryMeta(stationsQuery)
-					.then(sparqlResult => {
+	}).then(({ol, countryLookup, layerControl, projection, countriesTopo}) => {
+		queryMeta(stationsQuery).then(sparqlResult => {
+			const transformPointFn = projection.getCode() === 'EPSG:4326'
+				? (lon, lat) => [lon, lat]
+				: (lon, lat) => proj.transform([lon, lat], 'EPSG:4326', projection);
 
-						const transformPointFn = projection.getCode() === 'EPSG:4326'
-							? (lon, lat) => [lon, lat]
-							: (lon, lat) => proj.transform([lon, lat], 'EPSG:4326', projection);
+			const stations = new Stations(sparqlResult, transformPointFn);
+			const toggleLayers = getToggleLayers(layerVisibility, countriesTopo, stations);
+			ol.addToggleLayers(toggleLayers);
 
-						const stations = new Stations(sparqlResult, transformPointFn);
-						const duplicates = stations.getDuplicates({type: 'point'});
-
-						const stationPointsOS = stations
-							.filterByAttr({type: 'point', themeShort: 'OS'})
-							.filter(s => !duplicates.some(d => d.id === s.id));
-						const stationPointsES = stations
-							.filterByAttr({type: 'point', themeShort: 'ES'})
-							.filter(s => !duplicates.some(d => d.id === s.id));
-						const stationPointsAS = stations
-							.filterByAttr({type: 'point', themeShort: 'AS'})
-							.filter(s => !duplicates.some(d => d.id === s.id));
-						const shippingLines = stations.filterByAttr({type: 'line'});
-
-						const toggleLayers = [
-							{
-								id: 'bdr',
-								type: 'geojson',
-								name: 'Country borders',
-								interactive: false,
-								visible: layerVisibility.bdr,
-								data: countriesTopo,
-								style: styles.countryBorderStyle
-							},
-							{
-								id: 'os',
-								type: 'point',
-								name: 'Ocean stations',
-								visible: layerVisibility.os,
-								data: stationPointsOS,
-								style: styles.ptStyle('blue')
-							},
-							{
-								id: 'es',
-								type: 'point',
-								name: 'Ecosystem stations',
-								visible: layerVisibility.es,
-								data: stationPointsES,
-								style: styles.ptStyle('green')
-							},
-							{
-								id: 'as',
-								type: 'point',
-								name: 'Atmosphere stations',
-								visible: layerVisibility.as,
-								data: stationPointsAS,
-								style: styles.ptStyle('rgb(255,50,50)')
-							},
-							{
-								id: 'eas',
-								type: 'point',
-								name: 'Ecosystem-Atmosphere',
-								visible: layerVisibility.eas,
-								data: duplicates,
-								style: styles.ptStyle('rgb(248,246,26)')
-							},
-							{
-								id: 'ship',
-								type: 'geojson',
-								name: 'Shipping lines',
-								visible: layerVisibility.ship,
-								data: shippingLines.map(sl => addProps(sl)),
-								style: styles.lnStyle
-							}
-						];
-
-						ol.addToggleLayers(toggleLayers);
-
-						const stationFilter = new StationFilter(toggleLayers, countryLookup, filterFeatures);
-						layerControl.addCountrySelectors(stationFilter, ol);
-					});
-
-				if (epsgCode === 'EPSG:3035') {
-					ol.outlineExtent(projection);
-				}
-			});
+			const stationFilter = new StationFilter(toggleLayers, countryLookup, filterFeatures);
+			layerControl.addCountrySelectors(stationFilter, ol);
+		})
 	});
-};
+}
+
+function getToggleLayers(layerVisibility, countriesTopo, stations){
+	const duplicates = stations.getDuplicates({type: 'point'});
+	const stationPointsOS = stations
+		.filterByAttr({type: 'point', themeShort: 'OS'})
+		.filter(s => !duplicates.some(d => d.id === s.id));
+	const stationPointsES = stations
+		.filterByAttr({type: 'point', themeShort: 'ES'})
+		.filter(s => !duplicates.some(d => d.id === s.id));
+	const stationPointsAS = stations
+		.filterByAttr({type: 'point', themeShort: 'AS'})
+		.filter(s => !duplicates.some(d => d.id === s.id));
+	const shippingLines = stations.filterByAttr({type: 'line'});
+
+	return [
+		{
+			id: 'bdr',
+			type: 'geojson',
+			name: 'Country borders',
+			interactive: false,
+			visible: layerVisibility.bdr,
+			data: countriesTopo,
+			style: styles.countryBorderStyle
+		},
+		{
+			id: 'os',
+			type: 'point',
+			name: 'Ocean stations',
+			visible: layerVisibility.os,
+			data: stationPointsOS,
+			style: styles.ptStyle('blue')
+		},
+		{
+			id: 'es',
+			type: 'point',
+			name: 'Ecosystem stations',
+			visible: layerVisibility.es,
+			data: stationPointsES,
+			style: styles.ptStyle('green')
+		},
+		{
+			id: 'as',
+			type: 'point',
+			name: 'Atmosphere stations',
+			visible: layerVisibility.as,
+			data: stationPointsAS,
+			style: styles.ptStyle('rgb(255,50,50)')
+		},
+		{
+			id: 'eas',
+			type: 'point',
+			name: 'Ecosystem-Atmosphere',
+			visible: layerVisibility.eas,
+			data: duplicates,
+			style: styles.ptStyle('rgb(248,246,26)')
+		},
+		{
+			id: 'ship',
+			type: 'geojson',
+			name: 'Shipping lines',
+			visible: layerVisibility.ship,
+			data: shippingLines.map(sl => addProps(sl)),
+			style: styles.lnStyle
+		}
+	];
+}
 
 function filterFeatures(stationFilter, selected, ol) {
 	const stationsToFilter = stationFilter.stationsToFilter;
@@ -277,7 +220,7 @@ function filterFeatures(stationFilter, selected, ol) {
 			}
 		}
 	});
-};
+}
 
 function getBaseMapLayers(selectedtBaseMap){
 	const getNewTile = ({name, defaultVisibility, source}) => {
@@ -290,64 +233,17 @@ function getBaseMapLayers(selectedtBaseMap){
 	};
 
 	return availableBaseMaps.map(bm => getNewTile(bm));
-};
+}
 
 function getControls(projection) {
 	return [
 		new Zoom(),
 		new ZoomSlider(),
 		new ScaleLine(),
-		// new MousePosition({
-		// 	undefinedHTML: 'Mouse position',
-		// 	projection,
-		// 	coordinateFormat: coord => `X: ${coord[0].toFixed(0)}, Y: ${coord[1].toFixed(0)}`
-		// }),
 		new ZoomToExtent({extent: getViewParams(projection.getCode()).extent}),
 		new ExportControl(document.getElementById('exportCtrl')),
 	];
-};
-
-function getStyles() {
-	return {
-		countryStyle: new Style({
-			fill: new Fill({
-				color: 'rgb(205,170,102)'
-			}),
-			stroke: new Stroke({
-				color: 'rgb(100,100,100)',
-				width: 1
-			})
-		}),
-		countryBorderStyle: [
-			new Style({
-				stroke: new Stroke({
-					color: 'rgb(175,175,175)',
-					width: 3
-				})
-			}),
-			new Style({
-				stroke: new Stroke({
-					color: 'rgb(50,50,50)',
-					width: 1
-				})
-			})
-		],
-		ptStyle: (fillColor, strokeColor = 'black', strokeWidth = 1, radius = 4) => new Style({
-			image: new Circle({
-				radius,
-				snapToPixel: true,
-				fill: new Fill({color: fillColor}),
-				stroke: new Stroke({color: strokeColor, width: strokeWidth})
-			})
-		}),
-		lnStyle: new Style({
-			stroke: new Stroke({
-				color: 'rgb(50,50,200)',
-				width: 2
-			})
-		})
-	};
-};
+}
 
 function addProps(feature) {
 	const props = Object.keys(feature).reduce((acc, key) => {
@@ -362,4 +258,4 @@ function addProps(feature) {
 		geometry: feature.geoJson,
 		properties: props
 	};
-};
+}
