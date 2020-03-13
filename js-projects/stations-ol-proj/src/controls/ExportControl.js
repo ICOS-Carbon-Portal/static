@@ -1,4 +1,5 @@
-import Control from 'ol/control/control';
+import Control from 'ol/control/Control';
+import {getVectorContext} from 'ol/render';
 import {saveAs} from 'file-saver';
 
 export default class ExportControl extends Control {
@@ -77,9 +78,10 @@ export default class ExportControl extends Control {
 }
 
 const exportMap = (map, event, withLegend) => {
-	if (map === undefined) {
-		throw new Error("Map is undefined");
-	}
+	if (map === undefined) throw new Error("Map is undefined");
+
+	const layers = map.getLayers();
+	console.log({layers});
 
 	try {
 		const isFileSaverSupported = !!new Blob;
@@ -87,6 +89,7 @@ const exportMap = (map, event, withLegend) => {
 		throw new Error("Blob is not supported in your browser");
 	}
 
+	// Canvas context. Not available when the event is dispatched by the map. Only available when a Canvas renderer is used, null otherwise.
 	const mapCanvas = event.context.canvas;
 	const canvas = document.createElement('canvas');
 	canvas.width = mapCanvas.width;

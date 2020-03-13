@@ -1,6 +1,7 @@
-import OSM from "ol/source/osm";
-import Stamen from "ol/source/stamen";
-import XYZ from "ol/source/xyz";
+import OSM from "ol/source/OSM";
+import Stamen from "ol/source/Stamen";
+import XYZ from "ol/source/XYZ";
+import TileArcGISRest from 'ol/source/TileArcGISRest';
 
 export default [
 	{
@@ -19,40 +20,40 @@ export default [
 	{
 		name: 'Imagery',
 		defaultVisibility: false,
-		source: new XYZ({
-			url: '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+		source: new TileArcGISRest({
+			url: '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer',
 			crossOrigin: 'anonymous'
 		})
 	},
 	{
 		name: 'Topography',
 		defaultVisibility: false,
-		source: new XYZ({
-			url: '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+		source: new TileArcGISRest({
+			url: '//server.arcgisonline.com/arcgis/rest/services/World_Topo_Map/MapServer',
 			crossOrigin: 'anonymous'
 		})
 	},
 	{
 		name: 'Ocean',
 		defaultVisibility: false,
-		source: new XYZ({
-			url: '//server.arcgisonline.com/arcgis/rest/services/Ocean_Basemap/MapServer/tile/{z}/{y}/{x}',
+		source: new TileArcGISRest({
+			url: '//server.arcgisonline.com/arcgis/rest/services/Ocean_Basemap/MapServer',
 			crossOrigin: 'anonymous'
 		})
 	},
 	{
 		name: 'Physical',
 		defaultVisibility: true,
-		source: new XYZ({
-			url: '//server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}',
+		source: new TileArcGISRest({
+			url: '//server.arcgisonline.com/arcgis/rest/services/World_Physical_Map/MapServer',
 			crossOrigin: 'anonymous'
 		})
 	},
 	{
 		name: 'Shaded relief',
 		defaultVisibility: false,
-		source: new XYZ({
-			url: '//server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
+		source: new TileArcGISRest({
+			url: '//server.arcgisonline.com/arcgis/rest/services/World_Shaded_Relief/MapServer',
 			crossOrigin: 'anonymous'
 		})
 	}

@@ -1,12 +1,14 @@
-import Control from 'ol/control/control';
+import Control from 'ol/control/Control';
 
 
-export default class LayerControl extends Control {
-	constructor(rootElement, options = {}){
+export class LayerControl extends Control {
+	constructor(rootElement, useToggles = true, options = {}){
 		super(rootElement);
 
+		this._useToggles = useToggles;
 		this._layerGroups = [];
 		this._defaultBaseMap = undefined;
+		this._countrySelector = undefined;
 		this._layerCount = () => this._layerGroups.reduce((length, lg) => {
 			return length + lg.layers.length;
 		}, 0);
@@ -26,7 +28,7 @@ export default class LayerControl extends Control {
 			this._layers.setAttribute('style', 'display: inline;');
 		});
 		this._layers.addEventListener('mouseout', e => {
-			if (!this._layers.contains(e.toElement || e.relatedTarget)) {
+			if (e.target !== this._countrySelector && (!this._layers.contains(e.toElement || e.relatedTarget))) {
 				switchBtn.setAttribute('style', 'display: inline;');
 				this._layers.setAttribute('style', 'display: none;');
 			}
@@ -75,7 +77,9 @@ export default class LayerControl extends Control {
 	updateCtrl(){
 		this._layers.innerHTML = '';
 		const baseMaps = this._layerGroups.filter(lg => lg.layerType === 'baseMap');
-		const toggles = this._layerGroups.filter(lg => lg.layerType === 'toggle');
+		const toggles = this._useToggles
+			? this._layerGroups.filter(lg => lg.layerType === 'toggle')
+			: [];
 
 		if (baseMaps.length){
 			const root = document.createElement('div');
@@ -117,6 +121,11 @@ export default class LayerControl extends Control {
 			lbl.innerHTML = 'Layers';
 			root.appendChild(lbl);
 
+			const row = document.createElement('div');
+			this._countrySelector = document.createElement('select');
+			row.appendChild(this._countrySelector);
+			root.appendChild(row);
+
 			toggles.forEach(togg => {
 				const legendItem = this.getLegendItem(togg.layers[0]);
 				const row = document.createElement('div');
@@ -147,6 +156,27 @@ export default class LayerControl extends Control {
 
 			this._layers.appendChild(root);
 		}
+	}
+
+	addCountrySelectors(stationFilter, ol){
+		const countrySelector = this._countrySelector;
+		if (countrySelector === undefined) return;
+
+		countrySelector.addEventListener(
+			'change', e => stationFilter.filterFn(stationFilter, e.target.value, ol)
+		);
+
+		const option = document.createElement('option');
+		option.setAttribute('value', '0');
+		option.innerHTML = 'All countries';
+		countrySelector.appendChild(option);
+
+		stationFilter.countryList.forEach(country => {
+			const option = document.createElement('option');
+			option.setAttribute('value', country.val);
+			option.innerHTML = country.name;
+			countrySelector.appendChild(option);
+		});
 	}
 
 	getLegendItem(layer){

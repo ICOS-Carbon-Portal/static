@@ -1,26 +1,27 @@
-import 'babel-polyfill';
-import {OL, supportedSRIDs, getViewParams, getSearchParams} from 'icos-cp-ol';
+// import {OL, supportedSRIDs, getViewParams, getSearchParams} from 'icos-cp-ol';
+import {OL, supportedSRIDs, getViewParams, getSearchParams} from './OL';
 import {getCountriesGeoJson, getCountryLookup, queryMeta} from './backend';
 import config from '../../common/config-urls';
 import {getStations, getIcosStations} from './sparqlQueries';
 import Stations from './models/Stations';
-import Tile from 'ol/layer/tile';
-import proj from 'ol/proj';
-import Projection from 'ol/proj/projection';
+import TileLayer from 'ol/layer/Tile';
+import * as olProj from 'ol/proj';
+import {register} from 'ol/proj/proj4';
+import Projection from 'ol/proj/Projection';
 import proj4 from 'proj4';
-import Zoom from 'ol/control/zoom';
-import ZoomSlider from 'ol/control/zoomslider';
-import ScaleLine from 'ol/control/scaleline';
-import ZoomToExtent from 'ol/control/zoomtoextent';
-import {LayerControl} from 'icos-cp-ol';
+import Zoom from 'ol/control/Zoom';
+import ZoomSlider from 'ol/control/ZoomSlider';
+import ScaleLine from 'ol/control/ScaleLine';
+import ZoomToExtent from 'ol/control/ZoomToExtent';
+// import {LayerControl} from 'icos-cp-ol';
+import {LayerControl} from './controls/LayerControl';
 import ExportControl from './controls/ExportControl';
 import StationFilter from "./models/StationFilter";
 import availableBaseMaps from "./basemaps";
 import styles from "./styles";
 
-
 const searchParams = getSearchParams();
-const srid = searchParams.srid ? searchParams.srid : '3035';
+const srid = searchParams.srid ?? '3035';
 
 const stationsQuery = searchParams.icosMeta ? getIcosStations : getStations(config);
 
@@ -75,20 +76,20 @@ function start(srid, mapOptions, layerVisibility) {
 		const epsgCode = 'EPSG:' + srid;
 
 		if (epsgCode === 'EPSG:3035') {
-			proj.setProj4(proj4);
 			proj4.defs("EPSG:3035", "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
+			register(proj4);
 
-			proj.addProjection(new Projection({
+			olProj.addProjection(new Projection({
 				code: epsgCode,
 				extent: getViewParams(epsgCode).extent,
 				worldExtent: getViewParams(epsgCode).extent
 			}));
 		}
-		const projection = proj.get(epsgCode);
+		const projection = olProj.get(epsgCode);
 
 		const baseMaps = getBaseMapLayers(mapOptions.baseMap);
 		const controls = getControls(projection);
-		const layerControl = new LayerControl(document.getElementById('layerCtrl'));
+		const layerControl = new LayerControl(document.getElementById('layerCtrl'), false);
 
 		return {
 			ol: new OL(projection, baseMaps, controls.concat([layerControl]), countryLookup, mapOptions),
@@ -114,7 +115,7 @@ function start(srid, mapOptions, layerVisibility) {
 		queryMeta(stationsQuery).then(sparqlResult => {
 			const transformPointFn = projection.getCode() === 'EPSG:4326'
 				? (lon, lat) => [lon, lat]
-				: (lon, lat) => proj.transform([lon, lat], 'EPSG:4326', projection);
+				: (lon, lat) => olProj.transform([lon, lat], 'EPSG:4326', projection);
 
 			const stations = new Stations(sparqlResult, transformPointFn);
 			const toggleLayers = getToggleLayers(layerVisibility, countriesTopo, stations);
@@ -200,7 +201,7 @@ function filterFeatures(stationFilter, selected, ol) {
 	toggleLayers.forEach(layer => {
 		if (stationNames.includes(layer.get('name'))) {
 
-			if (layer.type === 'VECTOR') {
+			if (layer.constructor.name === 'VectorLayer') {
 				// points
 				const vectorSource = layer.getSource();
 				const points = stationsToFilter.find(theme => theme.name === layer.get('name')).data;
@@ -223,8 +224,8 @@ function filterFeatures(stationFilter, selected, ol) {
 }
 
 function getBaseMapLayers(selectedtBaseMap){
-	const getNewTile = ({name, defaultVisibility, source}) => {
-		return new Tile({
+	const getNewTileLayer = ({name, defaultVisibility, source}) => {
+		return new TileLayer({
 			visible: selectedtBaseMap ? name === selectedtBaseMap : defaultVisibility,
 			name,
 			layerType: 'baseMap',
@@ -232,7 +233,7 @@ function getBaseMapLayers(selectedtBaseMap){
 		});
 	};
 
-	return availableBaseMaps.map(bm => getNewTile(bm));
+	return availableBaseMaps.map(bm => getNewTileLayer(bm));
 }
 
 function getControls(projection) {

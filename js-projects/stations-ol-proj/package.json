@@ -1,12 +1,12 @@
 {
   "name": "static",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Carbon Portal services not directly dependant on server",
   "main": "gulpfile.js",
   "scripts": {
     "publish": "gulp publish",
-    "stations": "gulp stations",
+    "build": "gulp buildWatch",
     "gulp": "gulp"
   },
   "repository": {
@@ -27,27 +27,42 @@
     "url": "https://github.com/ICOS-Carbon-Portal/static/issues"
   },
   "homepage": "https://github.com/ICOS-Carbon-Portal/static#readme",
+  "babel": {
+    "presets": [
+      "@babel/preset-env"
+    ],
+    "plugins": [
+      "@babel/proposal-class-properties",
+      "@babel/proposal-object-rest-spread"
+    ]
+  },
   "devDependencies": {
-    "babel-preset-es2015": "^6.5.0",
-    "babelify": "^7.2.0",
-    "browserify": "^14.4.0",
-    "del": "^3.0.0",
-    "gulp": "^3.9.0",
-    "gulp-babel": "^7.0.0",
-    "gulp-jasmine": "^2.3.0",
-    "gulp-newer": "^1.3.0",
-    "gulp-uglify": "^3.0.0",
-    "vinyl-buffer": "^1.0.0",
-    "vinyl-source-stream": "^1.1.0"
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "7.8.7",
+    "@babel/plugin-proposal-class-properties": "7.8.3",
+    "@babel/plugin-proposal-object-rest-spread": "7.8.3",
+    "@babel/preset-env": "7.8.7",
+    "@babel/register": "7.8.6",
+    "babel-preset-es2015": "7.0.0-beta.3",
+    "babelify": "10.0.0",
+    "browserify": "16.5.0",
+    "del": "5.1.0",
+    "gulp": "4.0.2",
+    "gulp-babel": "8.0.0",
+    "gulp-jasmine": "4.0.0",
+    "gulp-newer": "1.4.0",
+    "gulp-uglify": "3.0.2",
+    "gulp-watch": "^5.0.1",
+    "vinyl-buffer": "1.0.1",
+    "vinyl-source-stream": "2.0.0"
   },
   "dependencies": {
-    "babel-polyfill": "^6.13.0",
-    "file-saver": "^1.3.8",
-    "icos-cp-backend": "^0.3.4",
-    "ol": "^4.6.5",
-    "icos-cp-ol": "^1.1.0",
-    "proj4": "^2.4.4",
-    "topojson": "^3.0.2",
-    "whatwg-fetch": "^2.0.3"
+    "file-saver": "1.3.8",
+    "icos-cp-backend": "0.4.1",
+    "icos-cp-ol": "1.1.0",
+    "ol": "6.2.1",
+    "proj4": "2.6.0",
+    "topojson": "3.0.2",
+    "whatwg-fetch": "3.0.0"
   }
 }

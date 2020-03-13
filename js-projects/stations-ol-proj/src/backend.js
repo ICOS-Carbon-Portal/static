@@ -13,5 +13,5 @@ export const getCountriesGeoJson = () => {
 };
 
 export const queryMeta = query => {
-	return sparql(query, config.sparqlEndpoint, true);
+	return sparql({text: query}, config.sparqlEndpoint, true);
 };
