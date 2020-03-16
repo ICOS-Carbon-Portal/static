@@ -1,8 +1,8 @@
 // import {OL, supportedSRIDs, getViewParams, getSearchParams} from 'icos-cp-ol';
 import {OL, supportedSRIDs, getViewParams, getSearchParams} from './OL';
-import {getCountriesGeoJson, getCountryLookup, queryMeta} from './backend';
+import {getCountriesGeoJson, getCountryLookup, getStationQuery, queryMeta} from './backend';
 import config from '../../common/config-urls';
-import {getStations, getIcosStations} from './sparqlQueries';
+import {getStations, getIcosStations, getDrought2018AtmoStations, getDrought2018EcoStations} from './sparqlQueries';
 import Stations from './models/Stations';
 import TileLayer from 'ol/layer/Tile';
 import * as olProj from 'ol/proj';
@@ -21,14 +21,16 @@ import availableBaseMaps from "./basemaps";
 import styles from "./styles";
 
 const searchParams = getSearchParams();
+searchParams.mode = searchParams.mode ?? 'icos';
+
 const srid = searchParams.srid ?? '3035';
 
-const stationsQuery = searchParams.icosMeta ? getIcosStations : getStations(config);
+const stationsQuery = getStationQuery(searchParams);
 
 if (supportedSRIDs.includes(srid)){
 	const mapOptions = {updateURL: true};
 
-	if (searchParams.zoom && searchParams.zoom.match(/^\d{1,2}$/)) {
+	if (searchParams.zoom && searchParams.zoom.match(/^\d{1,2}\.?\d*$/)) {
 		mapOptions.zoom = parseInt(searchParams.zoom);
 	}
 
@@ -55,6 +57,7 @@ if (supportedSRIDs.includes(srid)){
 		bdr: true
 	};
 
+	const mode = searchParams.mode;
 	const showParams = searchParams.hasOwnProperty('show') ? searchParams.show.split(',') : undefined;
 	if (showParams){
 		Object.keys(layerVisibility).forEach(key => layerVisibility[key] = false);
@@ -65,6 +68,7 @@ if (supportedSRIDs.includes(srid)){
 	}
 
 	start(srid, mapOptions, layerVisibility);
+
 } else {
 	const infoDiv = document.getElementById('map');
 	infoDiv.setAttribute('style', 'padding: 10px;');
@@ -72,33 +76,36 @@ if (supportedSRIDs.includes(srid)){
 }
 
 function start(srid, mapOptions, layerVisibility) {
+	const epsgCode = 'EPSG:' + srid;
+
+	if (epsgCode === 'EPSG:3035') {
+		proj4.defs("EPSG:3035", "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
+		register(proj4);
+
+		olProj.addProjection(new Projection({
+			code: epsgCode,
+			extent: getViewParams(epsgCode).extent,
+			worldExtent: getViewParams(epsgCode).extent
+		}));
+	}
+	const projection = olProj.get(epsgCode);
+
+	const transformPointFn = projection.getCode() === 'EPSG:4326'
+		? (lon, lat) => [lon, lat]
+		: (lon, lat) => olProj.transform([lon, lat], 'EPSG:4326', projection);
+
 	getCountryLookup().then(countryLookup => {
-		const epsgCode = 'EPSG:' + srid;
-
-		if (epsgCode === 'EPSG:3035') {
-			proj4.defs("EPSG:3035", "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
-			register(proj4);
-
-			olProj.addProjection(new Projection({
-				code: epsgCode,
-				extent: getViewParams(epsgCode).extent,
-				worldExtent: getViewParams(epsgCode).extent
-			}));
-		}
-		const projection = olProj.get(epsgCode);
-
 		const baseMaps = getBaseMapLayers(mapOptions.baseMap);
 		const controls = getControls(projection);
-		const layerControl = new LayerControl(document.getElementById('layerCtrl'), false);
+		const layerControl = new LayerControl(document.getElementById('layerCtrl'), searchParams.mode === 'icos');
 
 		return {
 			ol: new OL(projection, baseMaps, controls.concat([layerControl]), countryLookup, mapOptions),
 			countryLookup,
-			layerControl,
-			projection
+			layerControl
 		};
 
-	}).then(({ol, countryLookup, layerControl, projection}) => {
+	}).then(({ol, countryLookup, layerControl}) => {
 		return getCountriesGeoJson().then(countriesTopo => {
 			ol.addGeoJson('borders', 'Countries', 'baseMap', mapOptions.baseMap === 'Countries', countriesTopo, styles.countryStyle, false);
 
@@ -106,28 +113,72 @@ function start(srid, mapOptions, layerVisibility) {
 				ol,
 				countryLookup,
 				layerControl,
-				projection,
 				countriesTopo
 			};
 		});
 
-	}).then(({ol, countryLookup, layerControl, projection, countriesTopo}) => {
+	}).then(({ol, countryLookup, layerControl, countriesTopo}) => {
 		queryMeta(stationsQuery).then(sparqlResult => {
-			const transformPointFn = projection.getCode() === 'EPSG:4326'
-				? (lon, lat) => [lon, lat]
-				: (lon, lat) => olProj.transform([lon, lat], 'EPSG:4326', projection);
-
 			const stations = new Stations(sparqlResult, transformPointFn);
-			const toggleLayers = getToggleLayers(layerVisibility, countriesTopo, stations);
+			const toggleLayers = getToggleLayers(searchParams.mode, layerVisibility, countriesTopo, stations);
 			ol.addToggleLayers(toggleLayers);
 
-			const stationFilter = new StationFilter(toggleLayers, countryLookup, filterFeatures);
-			layerControl.addCountrySelectors(stationFilter, ol);
+			if (searchParams.mode === 'icos') {
+				const stationFilter = new StationFilter(toggleLayers, countryLookup, filterFeatures);
+				layerControl.addCountrySelectors(stationFilter, ol);
+			}
 		})
 	});
 }
 
-function getToggleLayers(layerVisibility, countriesTopo, stations){
+function getToggleLayers(mode, layerVisibility, countriesTopo, stations){
+	if (mode === 'icos'){
+		return getToggleLayersIcos(layerVisibility, countriesTopo, stations);
+
+	} else if (mode === 'droughtAtm') {
+		return [getCountryBorders(layerVisibility, countriesTopo), getToggleLayersDrought2018Atm(layerVisibility, stations.stations)];
+
+	} else if (mode === 'droughtEco') {
+		return [getCountryBorders(layerVisibility, countriesTopo), getToggleLayersDrought2018Eco(layerVisibility, stations.stations)];
+
+	}
+}
+
+function getCountryBorders(layerVisibility, countriesTopo){
+	return {
+		id: 'bdr',
+		type: 'geojson',
+		name: 'Country borders',
+		interactive: false,
+		visible: layerVisibility.bdr,
+		data: countriesTopo,
+		style: styles.countryBorderStyle
+	};
+}
+
+function getToggleLayersDrought2018Atm(layerVisibility, stations){
+	return {
+		id: 'droughtAtm',
+		type: 'point',
+		name: 'Drought Atmosphere stations',
+		visible: layerVisibility.droughtAtm,
+		data: stations,
+		style: styles.ptStyle('blue')
+	};
+}
+
+function getToggleLayersDrought2018Eco(layerVisibility, stations){
+	return {
+		id: 'droughtEco',
+		type: 'point',
+		name: 'Drought Ecosystem stations',
+		visible: layerVisibility.droughtEco,
+		data: stations,
+		style: styles.ptStyle('green')
+	};
+}
+
+function getToggleLayersIcos(layerVisibility, countriesTopo, stations){
 	const duplicates = stations.getDuplicates({type: 'point'});
 	const stationPointsOS = stations
 		.filterByAttr({type: 'point', themeShort: 'OS'})
@@ -141,15 +192,7 @@ function getToggleLayers(layerVisibility, countriesTopo, stations){
 	const shippingLines = stations.filterByAttr({type: 'line'});
 
 	return [
-		{
-			id: 'bdr',
-			type: 'geojson',
-			name: 'Country borders',
-			interactive: false,
-			visible: layerVisibility.bdr,
-			data: countriesTopo,
-			style: styles.countryBorderStyle
-		},
+		getCountryBorders(layerVisibility, countriesTopo),
 		{
 			id: 'os',
 			type: 'point',

@@ -2,10 +2,10 @@ import Control from 'ol/control/Control';
 
 
 export class LayerControl extends Control {
-	constructor(rootElement, useToggles = true, options = {}){
+	constructor(rootElement, useCountrySelector = true, options = {}){
 		super(rootElement);
 
-		this._useToggles = useToggles;
+		this._useCountrySelector = useCountrySelector;
 		this._layerGroups = [];
 		this._defaultBaseMap = undefined;
 		this._countrySelector = undefined;
@@ -77,9 +77,7 @@ export class LayerControl extends Control {
 	updateCtrl(){
 		this._layers.innerHTML = '';
 		const baseMaps = this._layerGroups.filter(lg => lg.layerType === 'baseMap');
-		const toggles = this._useToggles
-			? this._layerGroups.filter(lg => lg.layerType === 'toggle')
-			: [];
+		const toggles = this._layerGroups.filter(lg => lg.layerType === 'toggle');
 
 		if (baseMaps.length){
 			const root = document.createElement('div');
@@ -121,10 +119,12 @@ export class LayerControl extends Control {
 			lbl.innerHTML = 'Layers';
 			root.appendChild(lbl);
 
-			const row = document.createElement('div');
-			this._countrySelector = document.createElement('select');
-			row.appendChild(this._countrySelector);
-			root.appendChild(row);
+			if (this._useCountrySelector) {
+				const row = document.createElement('div');
+				this._countrySelector = document.createElement('select');
+				row.appendChild(this._countrySelector);
+				root.appendChild(row);
+			}
 
 			toggles.forEach(togg => {
 				const legendItem = this.getLegendItem(togg.layers[0]);

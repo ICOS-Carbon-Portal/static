@@ -62,3 +62,36 @@ where {
    OPTIONAL{?s cpmeta:hasSpatialCoverage/cpmeta:asGeoJSON ?spatRef}
 }
 order by ?id`;
+
+export const getDrought2018AtmoStations = drought2018stations('drought2018AtmoProduct', 'AS');
+export const getDrought2018EcoStations = drought2018stations('drought2018FluxnetProduct', 'ES');
+
+function drought2018stations(spec, themeShort){
+	return `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+	prefix prov: <http://www.w3.org/ns/prov#>
+	select
+		(str(?s) AS ?id) ?lat ?lon
+		("${themeShort}" AS ?themeShort)
+		?Country
+		(str(?sName) AS ?Short_name)
+		(str(?lName) AS ?Long_name)
+		("" as ?PI_names)
+		("?" as ?Site_type)
+		("?" as ?geoJson)
+	where{
+		{
+			select distinct ?s
+			where {
+				?dobj cpmeta:hasObjectSpec <http://meta.icos-cp.eu/resources/cpmeta/${spec}> .
+				?dobj cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?s .
+				?dobj cpmeta:hasSizeInBytes ?size .
+				FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
+			}
+		}
+		?s cpmeta:hasStationId ?sName .
+		?s cpmeta:hasName ?lName .
+		?s cpmeta:countryCode ?Country .
+		?s cpmeta:hasLatitude ?lat .
+		?s cpmeta:hasLongitude ?lon .
+	}`;
+}

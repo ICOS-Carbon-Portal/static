@@ -49,6 +49,10 @@ export default class Stations{
 			}, true)
 		);
 	}
+
+	get stations(){
+		return this._stations;
+	}
 }
 
 const sparqlBindingToValue = b =>{
