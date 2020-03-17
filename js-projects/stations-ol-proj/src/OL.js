@@ -16,8 +16,8 @@ import {Popup} from './Popup';
 import Stroke from "ol/style/Stroke";
 import Style from "ol/style/Style";
 import Fill from 'ol/style/Fill';
-import OSM from "ol/source/OSM";
 
+// For OpenLayers version 6.2.1
 
 const defaultMapOptions = {
 	// Initial zoom level
@@ -37,7 +37,6 @@ const defaultMapOptions = {
 	updateURL: false
 };
 
-// OL version 6.2.1
 export class OL{
 	constructor(projection, layers = [], controls = [], countryLookup, mapOptions){
 		this._projection = projection;

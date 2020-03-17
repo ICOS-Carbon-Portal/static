@@ -1,8 +1,5 @@
-// import {OL, supportedSRIDs, getViewParams, getSearchParams} from 'icos-cp-ol';
-import {OL, supportedSRIDs, getViewParams, getSearchParams} from './OL';
+import {OL, supportedSRIDs, getViewParams, getSearchParams, LayerControl} from 'icos-cp-ol';
 import {getCountriesGeoJson, getCountryLookup, getStationQuery, queryMeta} from './backend';
-import config from '../../common/config-urls';
-import {getStations, getIcosStations, getDrought2018AtmoStations, getDrought2018EcoStations} from './sparqlQueries';
 import Stations from './models/Stations';
 import TileLayer from 'ol/layer/Tile';
 import * as olProj from 'ol/proj';
@@ -13,12 +10,12 @@ import Zoom from 'ol/control/Zoom';
 import ZoomSlider from 'ol/control/ZoomSlider';
 import ScaleLine from 'ol/control/ScaleLine';
 import ZoomToExtent from 'ol/control/ZoomToExtent';
-// import {LayerControl} from 'icos-cp-ol';
-import {LayerControl} from './controls/LayerControl';
 import ExportControl from './controls/ExportControl';
 import StationFilter from "./models/StationFilter";
 import availableBaseMaps from "./basemaps";
 import styles from "./styles";
+
+// For OpenLayers version 6.2.1
 
 const searchParams = getSearchParams();
 searchParams.mode = searchParams.mode ?? 'icos';
@@ -57,7 +54,6 @@ if (supportedSRIDs.includes(srid)){
 		bdr: true
 	};
 
-	const mode = searchParams.mode;
 	const showParams = searchParams.hasOwnProperty('show') ? searchParams.show.split(',') : undefined;
 	if (showParams){
 		Object.keys(layerVisibility).forEach(key => layerVisibility[key] = false);
@@ -96,7 +92,7 @@ function start(srid, mapOptions, layerVisibility) {
 
 	getCountryLookup().then(countryLookup => {
 		const baseMaps = getBaseMapLayers(mapOptions.baseMap);
-		const controls = getControls(projection);
+		const controls = getControls(projection, searchParams.mode);
 		const layerControl = new LayerControl(document.getElementById('layerCtrl'), searchParams.mode === 'icos');
 
 		return {
@@ -279,13 +275,13 @@ function getBaseMapLayers(selectedtBaseMap){
 	return availableBaseMaps.map(bm => getNewTileLayer(bm));
 }
 
-function getControls(projection) {
+function getControls(projection, mode) {
 	return [
 		new Zoom(),
 		new ZoomSlider(),
 		new ScaleLine(),
 		new ZoomToExtent({extent: getViewParams(projection.getCode()).extent}),
-		new ExportControl(document.getElementById('exportCtrl')),
+		new ExportControl(document.getElementById('exportCtrl'), mode),
 	];
 }
 

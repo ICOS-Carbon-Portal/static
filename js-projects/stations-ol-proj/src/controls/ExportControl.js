@@ -1,12 +1,14 @@
 import Control from 'ol/control/Control';
-import {getVectorContext} from 'ol/render';
-import {saveAs} from 'file-saver';
+import { saveAs } from 'file-saver';
+
+// For OpenLayers version 6.2.1
 
 export default class ExportControl extends Control {
-	constructor(rootElement, options = {}){
+	constructor(rootElement, mode, options = {}){
 		super(rootElement);
 
 		this._map = undefined;
+		this._mode = mode;
 
 		Control.call(this, {
 			element: rootElement,
@@ -37,11 +39,8 @@ export default class ExportControl extends Control {
 
 		printWithLegendBtn.addEventListener('click', () => {
 			const map = this._map;
-
-			map.once('postcompose', event => {
-				exportMap(map, event, true);
-			});
-			this._map.renderSync();
+			const legendWidth = this._mode === 'icos' ? 180 : 213;
+			exportMap(map, getCanvases(map), true, legendWidth);
 			return false;
 		});
 
@@ -58,11 +57,7 @@ export default class ExportControl extends Control {
 
 		printWithoutLegendBtn.addEventListener('click', () => {
 			const map = this._map;
-
-			map.once('postcompose', event => {
-				exportMap(map, event, false);
-			});
-			this._map.renderSync();
+			exportMap(map, getCanvases(map), false);
 			return false;
 		});
 
@@ -77,11 +72,12 @@ export default class ExportControl extends Control {
 	}
 }
 
-const exportMap = (map, event, withLegend) => {
-	if (map === undefined) throw new Error("Map is undefined");
+const getCanvases = map => {
+	return Array.from(map.getTargetElement().getElementsByTagName('canvas')).filter(canvas => canvas.id === "");
+};
 
-	const layers = map.getLayers();
-	console.log({layers});
+const exportMap = (map, canvases, withLegend, width) => {
+	if (map === undefined) throw new Error("Map is undefined");
 
 	try {
 		const isFileSaverSupported = !!new Blob;
@@ -89,8 +85,7 @@ const exportMap = (map, event, withLegend) => {
 		throw new Error("Blob is not supported in your browser");
 	}
 
-	// Canvas context. Not available when the event is dispatched by the map. Only available when a Canvas renderer is used, null otherwise.
-	const mapCanvas = event.context.canvas;
+	const mapCanvas = canvases[0];
 	const canvas = document.createElement('canvas');
 	canvas.width = mapCanvas.width;
 	canvas.height = mapCanvas.height;
@@ -99,14 +94,14 @@ const exportMap = (map, event, withLegend) => {
 	// Copy map image to canvas
 	ctx.drawImage(mapCanvas, 0, 0);
 
-	if (withLegend) {
+	if (withLegend && width) {
 		const toggleLayers = map.getLayers().getArray().filter(l => l.get('layerType') === 'toggle');
 
 		// Draw legend rectangle
 		ctx.fillStyle = 'rgb(211, 211, 211)';
 		ctx.border = '1px solid black';
-		ctx.fillRect(1, 1, 180, 95);
-		ctx.strokeRect(1, 1, 180, 95);
+		ctx.fillRect(1, 1, width, 95);
+		ctx.strokeRect(1, 1, width, 95);
 
 		let dx;
 		let dy = 15;
@@ -123,7 +118,7 @@ const exportMap = (map, event, withLegend) => {
 
 			if (canvasImage) {
 				// Id is set in LayerControl
-				const txt = canvasImage.id.replace('canvas', '').replace('_', ' ');
+				const txt = canvasImage.id.replace('canvas', '').replace(/_/g, ' ');
 				// Create a copy of legend icon
 				const canvasImageCopy = document.createElement('canvas');
 				canvasImageCopy.width = canvasImage.width;
