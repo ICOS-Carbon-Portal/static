@@ -40,7 +40,8 @@ export default class ExportControl extends Control {
 		printWithLegendBtn.addEventListener('click', () => {
 			const map = this._map;
 			const legendWidth = this._mode === 'icos' ? 180 : 213;
-			exportMap(map, getCanvases(map), true, legendWidth);
+			const legendHeight = this._mode === 'icos' ? 95 : 27;
+			exportMap(map, getCanvases(map), true, legendWidth, legendHeight);
 			return false;
 		});
 
@@ -76,7 +77,7 @@ const getCanvases = map => {
 	return Array.from(map.getTargetElement().getElementsByTagName('canvas')).filter(canvas => canvas.id === "");
 };
 
-const exportMap = (map, canvases, withLegend, width) => {
+const exportMap = (map, canvases, withLegend, width, height) => {
 	if (map === undefined) throw new Error("Map is undefined");
 
 	try {
@@ -94,14 +95,14 @@ const exportMap = (map, canvases, withLegend, width) => {
 	// Copy map image to canvas
 	ctx.drawImage(mapCanvas, 0, 0);
 
-	if (withLegend && width) {
+	if (withLegend && width && height) {
 		const toggleLayers = map.getLayers().getArray().filter(l => l.get('layerType') === 'toggle');
 
 		// Draw legend rectangle
 		ctx.fillStyle = 'rgb(211, 211, 211)';
 		ctx.border = '1px solid black';
-		ctx.fillRect(1, 1, width, 95);
-		ctx.strokeRect(1, 1, width, 95);
+		ctx.fillRect(1, 1, width, height);
+		ctx.strokeRect(1, 1, width, height);
 
 		let dx;
 		let dy = 15;

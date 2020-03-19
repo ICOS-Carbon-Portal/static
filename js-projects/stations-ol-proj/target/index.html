@@ -166,23 +166,23 @@
 		</style>
 	</head>
 <body>
-	<div id="map"></div>
-	<div style="display: none;">
+	<div id="map">
 		<div id="popover" class="ol-popup"></div>
 		<div id="layerCtrl" class="ol-layer-control ol-layer-control-ur"></div>
 		<div id="exportCtrl" class="ol-layer-control ol-layer-control-lr"></div>
-		<div id="attribution" style="z-index: 99;" class="ol-attribution ol-unselectable ol-control ol-uncollapsible">
+		<div id="attribution" style="z-index: 99; font-size:.7rem;" class="ol-attribution ol-unselectable ol-control ol-uncollapsible">
 			<ul>
 				<li>
-					©
-					<a href="https://www.icos-ri.eu/" target="_blank">ICOS RI</a> -
+					© <a href="https://www.icos-ri.eu/" target="_blank">ICOS RI</a> -
 					<a rel="license" href="http://creativecommons.org/licenses/by/4.0/">
 						<img alt="Creative Commons License" style="border-width:0" src="//static.icos-cp.eu/images/cc4by_small.png" />
 					</a>
 				</li>
+				<li id="baseMapAttribution" />
 			</ul>
 		</div>
 	</div>
+
 	<script type="text/javascript" src="./stations.js"></script>
 </body>
 

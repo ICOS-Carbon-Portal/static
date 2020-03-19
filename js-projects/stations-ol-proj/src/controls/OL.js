@@ -16,6 +16,7 @@ import {Popup} from './Popup';
 import Stroke from "ol/style/Stroke";
 import Style from "ol/style/Style";
 import Fill from 'ol/style/Fill';
+import {LayerControl} from "./LayerControl";
 
 // For OpenLayers version 6.2.1
 
@@ -60,6 +61,24 @@ export class OL{
 
 	get map(){
 		return this._map;
+	}
+
+	set attributionUpdater(copyright){
+		const view = this._map.getView();
+		const layers = this._layers;
+
+		const layerSwitcher = this._controls.find(control => control instanceof LayerControl);
+		if (!layerSwitcher) return;
+
+		copyright.updateAttribution(view, layers);
+
+		layerSwitcher.on('change', _ => {
+			copyright.updateAttribution(view, layers);
+		});
+
+		this._map.on('moveend', _ => {
+			copyright.updateAttribution(view, layers);
+		});
 	}
 
 	initMap(countryLookup){

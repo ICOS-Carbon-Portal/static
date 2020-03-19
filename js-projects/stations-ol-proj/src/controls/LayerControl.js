@@ -190,6 +190,9 @@ export class LayerControl extends Control {
 		this._layerGroups.filter(lg => lg.layerType === 'baseMap').forEach(bm => {
 			bm.layers[0].setVisible(bm.name === baseMapNameToActivate);
 		});
+
+		// Signal to other components that basemap changed
+		this.changed();
 	}
 
 	toggleLayerGroup(checked, name){

@@ -34,3 +34,14 @@ export const getStationQuery = (searchParams) => {
 			throw new Error("Unsupported 'mode' parameter. Must be one of 'icos', 'droughtAtm', 'droughtEco' or undefined");
 	}
 };
+
+export const getESRICopyRight = services => {
+	const promises = services.map(service => getJson('https://static.arcgis.com/attribution/' + service + '?f=json'));
+
+	return Promise.all(promises).then(results => {
+		return results.reduce((acc, doc, idx) => {
+			acc[services[idx]] = doc;
+			return acc;
+		}, {});
+	});
+};

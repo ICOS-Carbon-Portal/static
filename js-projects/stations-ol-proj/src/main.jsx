@@ -1,5 +1,5 @@
 import {OL, supportedSRIDs, getViewParams, getSearchParams, LayerControl} from 'icos-cp-ol';
-import {getCountriesGeoJson, getCountryLookup, getStationQuery, queryMeta} from './backend';
+import {getCountriesGeoJson, getCountryLookup, getESRICopyRight, getStationQuery, queryMeta} from './backend';
 import Stations from './models/Stations';
 import TileLayer from 'ol/layer/Tile';
 import * as olProj from 'ol/proj';
@@ -12,8 +12,9 @@ import ScaleLine from 'ol/control/ScaleLine';
 import ZoomToExtent from 'ol/control/ZoomToExtent';
 import ExportControl from './controls/ExportControl';
 import StationFilter from "./models/StationFilter";
-import availableBaseMaps from "./basemaps";
+import availableBaseMaps, {esriBaseMapNames} from "./basemaps";
 import styles from "./styles";
+import Copyright from "./models/Copyright";
 
 // For OpenLayers version 6.2.1
 
@@ -123,7 +124,16 @@ function start(srid, mapOptions, layerVisibility) {
 				const stationFilter = new StationFilter(toggleLayers, countryLookup, filterFeatures);
 				layerControl.addCountrySelectors(stationFilter, ol);
 			}
-		})
+
+		}).then(_ => {
+			const minWidth = 600;
+			const width = document.getElementsByTagName('body')[0].getBoundingClientRect().width;
+			if (width < minWidth) return;
+
+			getESRICopyRight(esriBaseMapNames).then(attributions => {
+				ol.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
+			});
+		});
 	});
 }
 
@@ -159,7 +169,7 @@ function getToggleLayersDrought2018Atm(layerVisibility, stations){
 		name: 'Drought Atmosphere stations',
 		visible: layerVisibility.droughtAtm,
 		data: stations,
-		style: styles.ptStyle('blue')
+		style: styles.atmoStyle
 	};
 }
 
@@ -170,7 +180,7 @@ function getToggleLayersDrought2018Eco(layerVisibility, stations){
 		name: 'Drought Ecosystem stations',
 		visible: layerVisibility.droughtEco,
 		data: stations,
-		style: styles.ptStyle('green')
+		style: styles.ecoStyle
 	};
 }
 
@@ -195,7 +205,7 @@ function getToggleLayersIcos(layerVisibility, countriesTopo, stations){
 			name: 'Ocean stations',
 			visible: layerVisibility.os,
 			data: stationPointsOS,
-			style: styles.ptStyle('blue')
+			style: styles.oceanStyle
 		},
 		{
 			id: 'es',
@@ -203,7 +213,7 @@ function getToggleLayersIcos(layerVisibility, countriesTopo, stations){
 			name: 'Ecosystem stations',
 			visible: layerVisibility.es,
 			data: stationPointsES,
-			style: styles.ptStyle('green')
+			style: styles.ecoStyle
 		},
 		{
 			id: 'as',
@@ -211,7 +221,7 @@ function getToggleLayersIcos(layerVisibility, countriesTopo, stations){
 			name: 'Atmosphere stations',
 			visible: layerVisibility.as,
 			data: stationPointsAS,
-			style: styles.ptStyle('rgb(255,50,50)')
+			style: styles.atmoStyle
 		},
 		{
 			id: 'eas',
@@ -219,7 +229,7 @@ function getToggleLayersIcos(layerVisibility, countriesTopo, stations){
 			name: 'Ecosystem-Atmosphere',
 			visible: layerVisibility.eas,
 			data: duplicates,
-			style: styles.ptStyle('rgb(248,246,26)')
+			style: styles.ecoAtmoStyle
 		},
 		{
 			id: 'ship',
@@ -263,10 +273,11 @@ function filterFeatures(stationFilter, selected, ol) {
 }
 
 function getBaseMapLayers(selectedtBaseMap){
-	const getNewTileLayer = ({name, defaultVisibility, source}) => {
+	const getNewTileLayer = ({name, defaultVisibility, source, esriServiceName}) => {
 		return new TileLayer({
 			visible: selectedtBaseMap ? name === selectedtBaseMap : defaultVisibility,
 			name,
+			esriServiceName,
 			layerType: 'baseMap',
 			source
 		});

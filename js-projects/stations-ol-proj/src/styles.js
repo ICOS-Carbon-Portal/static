@@ -3,6 +3,23 @@ import Fill from "ol/style/Fill";
 import Stroke from "ol/style/Stroke";
 import Circle from "ol/style/Circle";
 
+const ptStyle = (fillColor, strokeColor = 'black', strokeWidth = 1, radius = 4) => {
+	return new Style({
+		image: new Circle({
+			radius,
+			snapToPixel: true,
+			fill: new Fill({color: fillColor}),
+			stroke: new Stroke({color: strokeColor, width: strokeWidth})
+		})
+	});
+};
+
+const oceanColor = 'rgb(92,43,147)';
+// Eco is officially rgb(174,192,0), made brighter in map
+const ecoColor = 'rgb(195,213,0)';
+const atmoColor = 'rgb(228,28,100)';
+const ecoAtmoColor = 'rgb(0,171,201)';
+
 export default {
 	countryStyle: new Style({
 		fill: new Fill({
@@ -27,17 +44,16 @@ export default {
 			})
 		})
 	],
-	ptStyle: (fillColor, strokeColor = 'black', strokeWidth = 1, radius = 4) => new Style({
-		image: new Circle({
-			radius,
-			snapToPixel: true,
-			fill: new Fill({color: fillColor}),
-			stroke: new Stroke({color: strokeColor, width: strokeWidth})
-		})
-	}),
+	ptStyle,
+
+	oceanStyle: ptStyle(oceanColor),
+	ecoStyle: ptStyle(ecoColor),
+	atmoStyle: ptStyle(atmoColor),
+	ecoAtmoStyle: ptStyle(ecoAtmoColor),
+
 	lnStyle: new Style({
 		stroke: new Stroke({
-			color: 'rgb(50,50,200)',
+			color: oceanColor,
 			width: 2
 		})
 	})
