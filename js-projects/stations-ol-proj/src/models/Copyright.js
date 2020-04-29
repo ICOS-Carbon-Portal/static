@@ -32,14 +32,20 @@ export default class Copyright {
 		if (width < this._minWidth) return;
 
 		const currentBasemap = layers.find(layer => layer.getVisible() && layer.get('layerType') === 'baseMap');
-		const esriServiceName = currentBasemap.get('esriServiceName');
+		const esriServiceName = currentBasemap
+			? currentBasemap.get('esriServiceName')
+			: undefined;
 
 		if (esriServiceName) {
 			const attributions = this.getAttribution(view.calculateExtent(), view.getZoom(), esriServiceName);
 			this._attributionElement.innerHTML = attributions.join(', ');
-		} else {
+
+		} else if (currentBasemap) {
 			const source = currentBasemap.getSource();
 			this._attributionElement.innerHTML = source.getAttributions()().join(', ');
+
+		} else {
+			this._attributionElement.innerHTML = '';
 		}
 	}
 }

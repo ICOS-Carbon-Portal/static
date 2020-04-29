@@ -15,6 +15,7 @@ import StationFilter from "./models/StationFilter";
 import availableBaseMaps, {esriBaseMapNames} from "./basemaps";
 import styles from "./styles";
 import Copyright from "./models/Copyright";
+import VectorLayer from "ol/layer/Vector";
 
 // For OpenLayers version 6.2.1
 
@@ -250,7 +251,7 @@ function filterFeatures(stationFilter, selected, ol) {
 	toggleLayers.forEach(layer => {
 		if (stationNames.includes(layer.get('name'))) {
 
-			if (layer.constructor.name === 'VectorLayer') {
+			if (layer instanceof VectorLayer) {
 				// points
 				const vectorSource = layer.getSource();
 				const points = stationsToFilter.find(theme => theme.name === layer.get('name')).data;
