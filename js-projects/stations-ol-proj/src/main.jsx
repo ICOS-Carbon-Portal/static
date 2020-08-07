@@ -124,6 +124,15 @@ function start(srid, mapOptions, layerVisibility) {
 			if (searchParams.mode === 'icos') {
 				const stationFilter = new StationFilter(toggleLayers, countryLookup, filterFeatures);
 				layerControl.addCountrySelectors(stationFilter, ol);
+
+				if (searchParams.countries) {
+					const countryList = searchParams.countries.split(',');
+
+					// Only run filter if every country code provided in URL exists in lookup
+					if (countryList.every(country => countryLookup[country])) {
+						stationFilter.filterFn(stationFilter, countryList, ol);
+					}
+				}
 			}
 
 		}).then(_ => {
@@ -255,7 +264,7 @@ function filterFeatures(stationFilter, selected, ol) {
 				// points
 				const vectorSource = layer.getSource();
 				const points = stationsToFilter.find(theme => theme.name === layer.get('name')).data;
-				const filteredPoints = points.filter(p => selected === "0" || p.Country === selected);
+				const filteredPoints = points.filter(p => selected === "0" || selected.includes(p.Country));
 				vectorSource.clear();
 				vectorSource.addFeatures(ol.pointsToFeatures(filteredPoints));
 			} else {
@@ -264,7 +273,7 @@ function filterFeatures(stationFilter, selected, ol) {
 				const lines = stationsToFilter.find(theme => theme.name === layer.get('name')).data;
 
 				groupLayers.forEach(l => {
-					const filteredLines = lines.filter(p => selected === "0" || p.properties.Country === selected);
+					const filteredLines = lines.filter(p => selected === "0" || selected.includes(p.properties.Country));
 					const ids = filteredLines.map(l => l.properties.id);
 					l.setVisible(ids.includes(l.get('id')));
 				});
