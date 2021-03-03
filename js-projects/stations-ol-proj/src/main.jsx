@@ -1,4 +1,4 @@
-import {OL, supportedSRIDs, getViewParams, getSearchParams, LayerControl} from 'icos-cp-ol';
+import {OL, supportedSRIDs, getViewParams, getSearchParams, projDefinitions, LayerControl} from 'icos-cp-ol';
 import {getCountriesGeoJson, getCountryLookup, getESRICopyRight, getStationQuery, queryMeta} from './backend';
 import Stations from './models/Stations';
 import TileLayer from 'ol/layer/Tile';
@@ -26,7 +26,7 @@ const srid = searchParams.srid ?? '3035';
 
 const stationsQuery = getStationQuery(searchParams);
 
-if (supportedSRIDs.includes(srid)){
+if (Object.keys(supportedSRIDs).includes(srid)){
 	const mapOptions = {updateURL: true};
 
 	if (searchParams.zoom && searchParams.zoom.match(/^\d{1,2}\.?\d*$/)) {
@@ -68,16 +68,17 @@ if (supportedSRIDs.includes(srid)){
 	start(srid, mapOptions, layerVisibility);
 
 } else {
+	const srids = Object.keys(supportedSRIDs).map(srid => srid + " (" + supportedSRIDs[srid] + ")").join(', ');
 	const infoDiv = document.getElementById('map');
 	infoDiv.setAttribute('style', 'padding: 10px;');
-	infoDiv.innerHTML = "Illegal SRID. Must be one of these: " + supportedSRIDs.join(', ');
+	infoDiv.innerHTML = "Illegal SRID. Must be one of these numbers: " + srids;
 }
 
 function start(srid, mapOptions, layerVisibility) {
 	const epsgCode = 'EPSG:' + srid;
 
-	if (epsgCode === 'EPSG:3035') {
-		proj4.defs("EPSG:3035", "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
+	if (Object.keys(projDefinitions).includes(epsgCode)) {
+		proj4.defs(epsgCode, projDefinitions[epsgCode]);
 		register(proj4);
 
 		olProj.addProjection(new Projection({
