@@ -6,7 +6,7 @@ zoom: [integer] - From 1 and up. Higher value means more zoomed in.
 
 center: [float,float] - Coordinate pair in specified reference system where you want the initial map view to center on.
 
-show: [str,...] - If 'show' is present in URL, specify which stations to show. To show all -> show=os,es,as,eas,ship. If 'show' is not present in URL, all stations are shown.
+show: [str,...] - If 'show' is present in URL, specify which stations to show. To show all -> show=os,es,as,overlap,ship. If 'show' is not present in URL, all stations are shown.
 
 baseMap: [str] - Set initial base map. Available base maps are OpenStreetMap, Watercolor, Imagery, Topography, Ocean, Shaded relief, Natural Earth and Countries. Map defaults to Natural Earth if no base map is specified. 
 

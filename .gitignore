@@ -53,5 +53,5 @@ jspm_packages/
 
 .idea/
 **/target/stations.js
-
-package-lock.json
+**/target/old/
+tsTarget/

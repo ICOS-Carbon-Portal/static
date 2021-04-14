@@ -1,8 +1,30 @@
 export default class StationFilter{
-	constructor(toggleLayers, countryLookup, filterFn){
+	constructor(toggleLayers, filterFn, countryLookup = undefined){
 		this.stationsToFilter = toggleLayers.filter(tl => tl.type === 'point' || tl.id === 'ship');
-		this.countryList = this.getCountryList(countryLookup);
 		this.filterFn = filterFn;
+
+		this.countryList = countryLookup
+			? this.getCountryList(countryLookup)
+			: undefined;
+		
+		this._selectedCountry = "0";
+		this._showNonLabelledStations = true;
+	}
+
+	get selectedCountry() {
+		return this._selectedCountry;
+	}
+
+	get showNonLabelledStations() {
+		return this._showNonLabelledStations;
+	}
+
+	set selectedCountry(selectedCountry) {
+		this._selectedCountry = selectedCountry;
+	}
+
+	set showNonLabelledStations(showNonLabelledStations) {
+		this._showNonLabelledStations = showNonLabelledStations;
 	}
 
 	getCountryList(countryLookup){

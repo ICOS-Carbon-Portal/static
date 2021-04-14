@@ -4,11 +4,10 @@ import { saveAs } from 'file-saver';
 // For OpenLayers version 6.2.1
 
 export default class ExportControl extends Control {
-	constructor(rootElement, mode, options = {}){
+	constructor(rootElement, options = {}){
 		super(rootElement);
 
 		this._map = undefined;
-		this._mode = mode;
 
 		Control.call(this, {
 			element: rootElement,
@@ -39,8 +38,8 @@ export default class ExportControl extends Control {
 
 		printWithLegendBtn.addEventListener('click', () => {
 			const map = this._map;
-			const legendWidth = this._mode === 'icos' ? 180 : 213;
-			const legendHeight = this._mode === 'icos' ? 95 : 27;
+			const legendWidth = 180;
+			const legendHeight = 95;
 			exportMap(map, getCanvases(map), true, legendWidth, legendHeight);
 			return false;
 		});

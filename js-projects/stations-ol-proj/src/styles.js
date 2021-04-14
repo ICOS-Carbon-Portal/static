@@ -49,7 +49,7 @@ export default {
 	oceanStyle: ptStyle(oceanColor),
 	ecoStyle: ptStyle(ecoColor),
 	atmoStyle: ptStyle(atmoColor),
-	ecoAtmoStyle: ptStyle(ecoAtmoColor),
+	samePosStyle: ptStyle(ecoAtmoColor),
 
 	lnStyle: new Style({
 		stroke: new Stroke({

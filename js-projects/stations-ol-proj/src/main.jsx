@@ -1,5 +1,5 @@
-import {OL, supportedSRIDs, getViewParams, getSearchParams, projDefinitions, LayerControl} from 'icos-cp-ol';
-import {getCountriesGeoJson, getCountryLookup, getESRICopyRight, getStationQuery, queryMeta} from './backend';
+import { OL, supportedSRIDs, getViewParams, getSearchParams, projDefinitions, LayerControl } from 'icos-cp-ol';
+import {getCountriesGeoJson, getCountryLookup, getESRICopyRight} from './backend';
 import Stations from './models/Stations';
 import TileLayer from 'ol/layer/Tile';
 import * as olProj from 'ol/proj';
@@ -16,15 +16,16 @@ import availableBaseMaps, {esriBaseMapNames} from "./basemaps";
 import styles from "./styles";
 import Copyright from "./models/Copyright";
 import VectorLayer from "ol/layer/Vector";
+import StationParser, { fetchMergeParseStations } from '../../commonJs/tsTarget/stations';
+import { Vars } from '../../commonJs/tsTarget/stations';
+import bboxClip from '@turf/bbox-clip';
+import { polygon } from '@turf/helpers';
 
 // For OpenLayers version 6.2.1
 
 const searchParams = getSearchParams();
-searchParams.mode = searchParams.mode ?? 'icos';
 
 const srid = searchParams.srid ?? '3035';
-
-const stationsQuery = getStationQuery(searchParams);
 
 if (Object.keys(supportedSRIDs).includes(srid)){
 	const mapOptions = {updateURL: true};
@@ -51,7 +52,7 @@ if (Object.keys(supportedSRIDs).includes(srid)){
 		os: true,
 		es: true,
 		as: true,
-		eas: true,
+		overlap: true,
 		ship: true,
 		bdr: true
 	};
@@ -74,7 +75,7 @@ if (Object.keys(supportedSRIDs).includes(srid)){
 	infoDiv.innerHTML = "Illegal SRID. Must be one of these numbers: " + srids;
 }
 
-function start(srid, mapOptions, layerVisibility) {
+async function start(srid, mapOptions, layerVisibility) {
 	const epsgCode = 'EPSG:' + srid;
 
 	if (Object.keys(projDefinitions).includes(epsgCode)) {
@@ -92,110 +93,58 @@ function start(srid, mapOptions, layerVisibility) {
 	const transformPointFn = projection.getCode() === 'EPSG:4326'
 		? (lon, lat) => [lon, lat]
 		: (lon, lat) => olProj.transform([lon, lat], 'EPSG:4326', projection);
+	
+	const countryLookup = await getCountryLookup();
+	const baseMaps = getBaseMapLayers(mapOptions.baseMap);
+	const controls = getControls(projection, searchParams.mode);
+	const layerControl = new LayerControl(document.getElementById('layerCtrl'));
+	const ol = new OL(projection, baseMaps, controls.concat([layerControl]), countryLookup, mapOptions);
 
-	getCountryLookup().then(countryLookup => {
-		const baseMaps = getBaseMapLayers(mapOptions.baseMap);
-		const controls = getControls(projection, searchParams.mode);
-		const layerControl = new LayerControl(document.getElementById('layerCtrl'), searchParams.mode === 'icos');
+	const countriesTopo = await getCountriesGeoJson();
+	ol.addGeoJson('borders', 'Countries', 'baseMap', mapOptions.baseMap === 'Countries', countriesTopo, styles.countryStyle, false);
 
-		return {
-			ol: new OL(projection, baseMaps, controls.concat([layerControl]), countryLookup, mapOptions),
-			countryLookup,
-			layerControl
-		};
+	const stationParser = new StationParser(countryLookup, transformPointFn);
+	const stationsParsed = await fetchMergeParseStations(stationParser);
+	const stations = new Stations(stationsParsed);
 
-	}).then(({ol, countryLookup, layerControl}) => {
-		return getCountriesGeoJson().then(countriesTopo => {
-			ol.addGeoJson('borders', 'Countries', 'baseMap', mapOptions.baseMap === 'Countries', countriesTopo, styles.countryStyle, false);
+	const toggleLayers = getToggleLayers(layerVisibility, countriesTopo, stations);
+	ol.addToggleLayers(toggleLayers);
 
-			return {
-				ol,
-				countryLookup,
-				layerControl,
-				countriesTopo
-			};
-		});
+	const featureFilter = new StationFilter(toggleLayers, filterFeatures(pointFilterFn, shippingFilterFn), countryLookup);
+	layerControl.addCountrySelectors(featureFilter, ol);
+	layerControl.addToggleForLabeledStations(featureFilter, ol);
 
-	}).then(({ol, countryLookup, layerControl, countriesTopo}) => {
-		queryMeta(stationsQuery).then(sparqlResult => {
-			const stations = new Stations(sparqlResult, transformPointFn);
-			const toggleLayers = getToggleLayers(searchParams.mode, layerVisibility, countriesTopo, stations);
-			ol.addToggleLayers(toggleLayers);
+	if (searchParams.countries) {
+		const countryList = searchParams.countries.split(',');
 
-			if (searchParams.mode === 'icos') {
-				const stationFilter = new StationFilter(toggleLayers, countryLookup, filterFeatures);
-				layerControl.addCountrySelectors(stationFilter, ol);
+		// Only run filter if every country code provided in URL exists in lookup
+		if (countryList.every(country => countryLookup[country])) {
+			featureFilter.filterFn(featureFilter, countryList, ol);
+		}
+	}
 
-				if (searchParams.countries) {
-					const countryList = searchParams.countries.split(',');
+	const minWidth = 600;
+	const width = document.getElementsByTagName('body')[0].getBoundingClientRect().width;
+	if (width < minWidth) return;
 
-					// Only run filter if every country code provided in URL exists in lookup
-					if (countryList.every(country => countryLookup[country])) {
-						stationFilter.filterFn(stationFilter, countryList, ol);
-					}
-				}
-			}
-
-		}).then(_ => {
-			const minWidth = 600;
-			const width = document.getElementsByTagName('body')[0].getBoundingClientRect().width;
-			if (width < minWidth) return;
-
-			getESRICopyRight(esriBaseMapNames).then(attributions => {
-				ol.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
-			});
-		});
+	getESRICopyRight(esriBaseMapNames).then(attributions => {
+		ol.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
 	});
 }
 
-function getToggleLayers(mode, layerVisibility, countriesTopo, stations){
-	if (mode === 'icos'){
-		return getToggleLayersIcos(layerVisibility, countriesTopo, stations);
-
-	} else if (mode === 'droughtAtm') {
-		return [getCountryBorders(layerVisibility, countriesTopo), getToggleLayersDrought2018Atm(layerVisibility, stations.stations)];
-
-	} else if (mode === 'droughtEco') {
-		return [getCountryBorders(layerVisibility, countriesTopo), getToggleLayersDrought2018Eco(layerVisibility, stations.stations)];
-
+const clipToBbox = (layer) => {
+	if (layer.id === "http://meta.icos-cp.eu/resources/stations/OS_PS-VOS") {
+		const originalCoords = layer.geoJson.geometries.map(geom => geom.coordinates);
+		const clippedGeometries = originalCoords
+			.map(coords => bboxClip(polygon(coords), [-180, 0, 180, 90]))
+			.map(f => f.geometry);
+		layer.geoJson.geometries = clippedGeometries;
 	}
-}
+	
+	return layer;
+};
 
-function getCountryBorders(layerVisibility, countriesTopo){
-	return {
-		id: 'bdr',
-		type: 'geojson',
-		name: 'Country borders',
-		interactive: false,
-		visible: layerVisibility.bdr,
-		data: countriesTopo,
-		style: styles.countryBorderStyle
-	};
-}
-
-function getToggleLayersDrought2018Atm(layerVisibility, stations){
-	return {
-		id: 'droughtAtm',
-		type: 'point',
-		name: 'Drought Atmosphere stations',
-		visible: layerVisibility.droughtAtm,
-		data: stations,
-		style: styles.atmoStyle
-	};
-}
-
-function getToggleLayersDrought2018Eco(layerVisibility, stations){
-	return {
-		id: 'droughtEco',
-		type: 'point',
-		name: 'Drought Ecosystem stations',
-		visible: layerVisibility.droughtEco,
-		data: stations,
-		style: styles.ecoStyle
-	};
-}
-
-function getToggleLayersIcos(layerVisibility, countriesTopo, stations){
+function getToggleLayers(layerVisibility, countriesTopo, stations){
 	const duplicates = stations.getDuplicates({type: 'point'});
 	const stationPointsOS = stations
 		.filterByAttr({type: 'point', themeShort: 'OS'})
@@ -206,25 +155,19 @@ function getToggleLayersIcos(layerVisibility, countriesTopo, stations){
 	const stationPointsAS = stations
 		.filterByAttr({type: 'point', themeShort: 'AS'})
 		.filter(s => !duplicates.some(d => d.id === s.id));
-	const shippingLines = stations.filterByAttr({type: 'line'});
+	const shipping = srid === '3035'
+		? stations.filterByAttr({ type: 'geo' }).map(clipToBbox)
+		: stations.filterByAttr({ type: 'geo' });
 
 	return [
-		getCountryBorders(layerVisibility, countriesTopo),
 		{
-			id: 'os',
-			type: 'point',
-			name: 'Ocean stations',
-			visible: layerVisibility.os,
-			data: stationPointsOS,
-			style: styles.oceanStyle
-		},
-		{
-			id: 'es',
-			type: 'point',
-			name: 'Ecosystem stations',
-			visible: layerVisibility.es,
-			data: stationPointsES,
-			style: styles.ecoStyle
+			id: 'bdr',
+			type: 'geojson',
+			name: 'Country borders',
+			interactive: false,
+			visible: layerVisibility.bdr,
+			data: countriesTopo,
+			style: styles.countryBorderStyle
 		},
 		{
 			id: 'as',
@@ -235,53 +178,91 @@ function getToggleLayersIcos(layerVisibility, countriesTopo, stations){
 			style: styles.atmoStyle
 		},
 		{
-			id: 'eas',
+			id: 'es',
 			type: 'point',
-			name: 'Ecosystem-Atmosphere',
-			visible: layerVisibility.eas,
+			name: 'Ecosystem stations',
+			visible: layerVisibility.es,
+			data: stationPointsES,
+			style: styles.ecoStyle
+		},
+		{
+			id: 'os',
+			type: 'point',
+			name: 'Ocean stations',
+			visible: layerVisibility.os,
+			data: stationPointsOS,
+			style: styles.oceanStyle
+		},
+		{
+			id: 'overlap',
+			type: 'point',
+			name: 'Overlapping stations',
+			visible: layerVisibility.overlap,
+			isEmpty: duplicates.length === 0,
 			data: duplicates,
-			style: styles.ecoAtmoStyle
+			style: styles.samePosStyle
 		},
 		{
 			id: 'ship',
 			type: 'geojson',
-			name: 'Shipping lines',
+			name: 'Shipping geo coverage',
 			visible: layerVisibility.ship,
-			data: shippingLines.map(sl => addProps(sl)),
+			data: shipping.map(sl => addProps(sl)),
 			style: styles.lnStyle
 		}
 	];
 }
 
-function filterFeatures(stationFilter, selected, ol) {
+const pointFilterFn = (stationsToFilter, layer, ol, selectedCountry, showNonLabelledStations) => {
+	const vectorSource = layer.getSource();
+	const points = stationsToFilter.find(toggleGroup => toggleGroup.name === layer.get('name')).data;
+	const filteredPoints = points.filter(p =>
+		(selectedCountry === "0" || selectedCountry.includes(p.Country)) && (showNonLabelledStations ? true : p[Vars.labelingDate] !== "")
+	);
+
+	vectorSource.clear();
+	vectorSource.addFeatures(ol.pointsToFeatures(filteredPoints));
+};
+
+const shippingFilterFn = (stationsToFilter, layer, selectedCountry, showNonLabelledStations) => {
+	const groupLayers = layer.getLayers();
+	const linesPolys = stationsToFilter.find(toggleGroup => toggleGroup.name === layer.get('name')).data;
+
+	groupLayers.forEach(l => {
+		const filteredLinesPolys = linesPolys.filter(lp =>
+			(selectedCountry === "0" || selectedCountry.includes(lp.properties.Country)) && (showNonLabelledStations ? true : lp.properties[Vars.labelingDate])
+		);
+		const ids = filteredLinesPolys.map(l => l.properties.id);
+		l.setVisible(ids.includes(l.get('id')));
+	});
+};
+
+const filterFeatures = (pointFilter, linePolyFilter) => (stationFilter, ol, selectedCountry, showNonLabelledStations) => {
 	const stationsToFilter = stationFilter.stationsToFilter;
 	const stationNames = stationsToFilter.map(themeStations => themeStations.name);
 	const toggleLayers = ol.getToggleLayers();
+
+	const selectedCountryCombined = selectedCountry ?? stationFilter.selectedCountry;
+	stationFilter.selectedCountry = selectedCountryCombined;
+	const showNonLabelledStationsCombined = showNonLabelledStations === undefined
+		? stationFilter.showNonLabelledStations
+		: showNonLabelledStations;
+	stationFilter.showNonLabelledStations = showNonLabelledStationsCombined;
 
 	toggleLayers.forEach(layer => {
 		if (stationNames.includes(layer.get('name'))) {
 
 			if (layer instanceof VectorLayer) {
 				// points
-				const vectorSource = layer.getSource();
-				const points = stationsToFilter.find(theme => theme.name === layer.get('name')).data;
-				const filteredPoints = points.filter(p => selected === "0" || selected.includes(p.Country));
-				vectorSource.clear();
-				vectorSource.addFeatures(ol.pointsToFeatures(filteredPoints));
-			} else {
-				// shipping lines
-				const groupLayers = layer.getLayers();
-				const lines = stationsToFilter.find(theme => theme.name === layer.get('name')).data;
+				pointFilter(stationsToFilter, layer, ol, selectedCountryCombined, showNonLabelledStationsCombined);
 
-				groupLayers.forEach(l => {
-					const filteredLines = lines.filter(p => selected === "0" || selected.includes(p.properties.Country));
-					const ids = filteredLines.map(l => l.properties.id);
-					l.setVisible(ids.includes(l.get('id')));
-				});
+			} else {
+				// shipping
+				linePolyFilter(stationsToFilter, layer, selectedCountryCombined, showNonLabelledStationsCombined);
 			}
 		}
 	});
-}
+};
 
 function getBaseMapLayers(selectedtBaseMap){
 	const getNewTileLayer = ({name, defaultVisibility, source, esriServiceName}) => {
@@ -297,13 +278,13 @@ function getBaseMapLayers(selectedtBaseMap){
 	return availableBaseMaps.map(bm => getNewTileLayer(bm));
 }
 
-function getControls(projection, mode) {
+function getControls(projection) {
 	return [
 		new Zoom(),
 		new ZoomSlider(),
 		new ScaleLine(),
 		new ZoomToExtent({extent: getViewParams(projection.getCode()).extent}),
-		new ExportControl(document.getElementById('exportCtrl'), mode),
+		new ExportControl(document.getElementById('exportCtrl')),
 	];
 }
 
