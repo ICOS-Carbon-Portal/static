@@ -28,7 +28,10 @@ const searchParams = getSearchParams();
 const srid = searchParams.srid ?? '3035';
 
 if (Object.keys(supportedSRIDs).includes(srid)){
-	const mapOptions = {updateURL: true};
+	const mapOptions = {
+		updateURL: true,
+		popupProps: [Vars.stationName, Vars.country, Vars.theme, Vars.siteType, Vars.pi]
+	};
 
 	if (searchParams.zoom && searchParams.zoom.match(/^\d{1,2}\.?\d*$/)) {
 		mapOptions.zoom = parseInt(searchParams.zoom);
