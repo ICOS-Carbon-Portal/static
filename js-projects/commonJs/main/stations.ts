@@ -192,7 +192,7 @@ FROM <http://meta.icos-cp.eu/resources/cpmeta/>
 FROM <http://meta.icos-cp.eu/resources/stationentry/>
 WHERE{
 	{
-		select ?s ?ps (GROUP_CONCAT(?lname; separator=";") AS ?piNames) where {
+		select ?s ?ps (GROUP_CONCAT(?lname; separator=";") AS ?${Vars.pi}) where {
 			?s cpst:hasProductionCounterpart ?psStr .
 			bind(iri(?psStr) as ?ps)
 			?memb cpmeta:atOrganization ?ps ; cpmeta:hasRole <http://meta.icos-cp.eu/resources/roles/PI> .
