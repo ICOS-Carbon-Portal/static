@@ -16,7 +16,7 @@ import availableBaseMaps, {esriBaseMapNames} from "./basemaps";
 import styles from "./styles";
 import Copyright from "./models/Copyright";
 import VectorLayer from "ol/layer/Vector";
-import StationParser, { fetchMergeParseStations } from '../../commonJs/tsTarget/stations';
+import { StationParser, fetchMergeParseStations } from '../../commonJs/tsTarget/stations';
 import { Vars } from '../../commonJs/tsTarget/stations';
 import bboxClip from '@turf/bbox-clip';
 import { polygon } from '@turf/helpers';
