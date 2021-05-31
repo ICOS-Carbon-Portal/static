@@ -1,0 +1,1 @@
+scp dist/stations.js  fsicos2:/usr/share/nginx/static/share/stationscommon/

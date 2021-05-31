@@ -2,7 +2,7 @@ export type Modifiers = Partial<Obj<(v: string, row: Obj<BindingEntry, VarName>)
 export type ParsedSparqlValue = number | Date | string
 export type TransformPointFn = (lon: number, lat: number) => [number, number]
 
-export default class StationParser {
+export class StationParser {
 	constructor(private readonly countries: Obj, private readonly transformPointFn?: TransformPointFn) { }
 
 	parse(bindings: Obj<BindingEntry, VarName>[]) {

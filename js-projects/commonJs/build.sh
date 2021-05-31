@@ -1,6 +1,3 @@
 #!/bin/bash
 
-rm -rf ./tsTarget/*
-
-npx tsc
-npx tsc --watch
+npx webpack --config webpack.config.js
