@@ -1,0 +1,15 @@
+// Override Bootstrap's Sass default variables
+
+// Toggle global options
+$enable-shadows: true;
+
+// Customize some defaults
+$primary: #0a96f0;
+$border-radius: .4rem;
+$min-contrast-ratio: 3;
+$font-family-base: "Open Sans", system-ui, -apple-system, sans-serif;
+
+// Import Bootstrap's CSS
+@import 'common-imports'
+
+// Custom styles
