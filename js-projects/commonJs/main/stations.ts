@@ -166,6 +166,7 @@ export const varNameIdx = (varName: VarName) => Columns.indexOf(varName);
 const provQuery = `PREFIX cpst: <http://meta.icos-cp.eu/ontologies/stationentry/>
 SELECT *
 FROM <http://meta.icos-cp.eu/resources/stationentry/>
+FROM NAMED <http://meta.icos-cp.eu/resources/stationlabeling/>
 WHERE {
 	{
 		select ?s (GROUP_CONCAT(?piLname; separator=";") AS ?${Vars.pi})
@@ -182,6 +183,13 @@ WHERE {
 	OPTIONAL{?s cpst:hasSiteType ?${Vars.siteType} }
 	OPTIONAL{?s cpst:hasElevationAboveSea ?${Vars.seaElev} }
 	OPTIONAL{?s cpst:hasStationClass ?${Vars.stationClass} }
+	OPTIONAL{
+		GRAPH <http://meta.icos-cp.eu/resources/stationlabeling/> {
+			?s cpst:hasAppStatusDate ?labelDt .
+			?s cpst:hasApplicationStatus "STEP3APPROVED"^^xsd:string .
+			BIND(SUBSTR(str(?labelDt), 1, 10) AS ?${Vars.labelingDate})
+		}
+	}
 }`;
 
 const prodQuery = `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
@@ -208,7 +216,6 @@ WHERE{
 	OPTIONAL{ ?ps cpmeta:hasSpatialCoverage/cpmeta:asGeoJSON ?${Vars.geoJson}}
 	OPTIONAL{ ?ps cpmeta:countryCode ?${Vars.country}}
 	OPTIONAL{ ?ps cpmeta:hasStationClass  ?${Vars.stationClass}}
-	OPTIONAL{ ?ps cpmeta:hasLabelingDate ?${Vars.labelingDate}}
 	BIND(?ps as ?${Vars.prodUri})
 }`;
 
