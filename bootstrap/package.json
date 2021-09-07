@@ -20,20 +20,20 @@
     "test": "npm-run-all css-lint css"
   },
   "dependencies": {
-    "@popperjs/core": "^2.9.2",
-    "bootstrap": "^5.0.1",
+    "@popperjs/core": "^2.10.1",
+    "bootstrap": "^5.1.0",
     "bootstrap-icons": "^1.5.0"
   },
   "devDependencies": {
-    "autoprefixer": "^10.2.5",
-    "nodemon": "^2.0.7",
+    "autoprefixer": "^10.3.4",
+    "nodemon": "^2.0.12",
     "npm-run-all": "^4.1.5",
-    "postcss": "^8.3.0",
+    "postcss": "^8.3.6",
     "postcss-cli": "^8.3.1",
     "purgecss": "^4.0.3",
-    "sass": "1.32.13",
-    "serve": "^11.3.2",
+    "sass": "^1.39.0",
+    "serve": "^12.0.0",
     "stylelint": "^13.13.1",
-    "stylelint-config-twbs-bootstrap": "^2.2.0"
+    "stylelint-config-twbs-bootstrap": "^2.2.3"
   }
 }
