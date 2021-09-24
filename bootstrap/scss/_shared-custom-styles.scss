@@ -1,0 +1,49 @@
+a,
+.btn-link {
+  text-decoration: none;
+}
+
+a:focus,
+a:hover,
+.btn-link:focus,
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+a.btn:hover,
+a.btn:focus {
+  text-decoration: none;
+}
+
+.card.border-primary,
+.card-header.border-primary {
+  border-color: rgba(var(--bs-primary-rgb), 0.5) !important;
+}
+
+.card.border-success,
+.card-header.border-success {
+  border-color: rgba(var(--bs-success-rgb), 0.5) !important;
+}
+
+.card.border-warning,
+.card-header.border-warning {
+  border-color: rgba(var(--bs-warning-rgb), 0.5) !important;
+}
+
+.card.border-info,
+.card-header.border-info {
+  border-color: rgba(var(--bs-info-rgb), 0.5) !important;
+}
+
+.card.border-danger,
+.card-header.border-danger {
+  border-color: rgba(var(--bs-danger-rgb), 0.5) !important;
+}
+
+.card-header.bg-primary,
+.card-header.bg-success,
+.card-header.bg-warning,
+.card-header.bg-info,
+.card-header.bg-danger {
+  --bs-bg-opacity: 0.5;
+}
