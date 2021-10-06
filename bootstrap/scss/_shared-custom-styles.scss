@@ -1,18 +1,14 @@
-a,
-.btn-link {
+a:not([class]),
+a.badge {
   text-decoration: none;
 }
 
-a:focus,
-a:hover,
-.btn-link:focus,
-.btn-link:hover {
+a:not([class]):hover {
   text-decoration: underline;
 }
 
-a.btn:hover,
-a.btn:focus {
-  text-decoration: none;
+.page-header {
+  padding-bottom: 1rem;
 }
 
 .card.border-primary,
@@ -46,4 +42,10 @@ a.btn:focus {
 .card-header.bg-info,
 .card-header.bg-danger {
   --bs-bg-opacity: 0.5;
+}
+
+.badge-keyword {
+  font-size: 85%;
+  margin-bottom: 0.3rem;
+  line-height: 1.4rem;
 }
