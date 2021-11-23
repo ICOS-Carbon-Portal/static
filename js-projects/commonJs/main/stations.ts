@@ -194,6 +194,7 @@ WHERE {
 
 const prodQuery = `prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix cpst: <http://meta.icos-cp.eu/ontologies/stationentry/>
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 SELECT *
 FROM <http://meta.icos-cp.eu/resources/icos/>
 FROM <http://meta.icos-cp.eu/resources/cpmeta/>
@@ -213,6 +214,7 @@ WHERE{
 	OPTIONAL{ ?ps cpmeta:hasElevation ?${Vars.seaElev} }
 	OPTIONAL{ ?ps cpmeta:hasLatitude ?${Vars.lat}}
 	OPTIONAL{ ?ps cpmeta:hasLongitude ?${Vars.lon}}
+	OPTIONAL{ ?ps cpmeta:hasEcosystemType/rdfs:label ?${Vars.siteType} }
 	OPTIONAL{ ?ps cpmeta:hasSpatialCoverage/cpmeta:asGeoJSON ?${Vars.geoJson}}
 	OPTIONAL{ ?ps cpmeta:countryCode ?${Vars.country}}
 	OPTIONAL{ ?ps cpmeta:hasStationClass  ?${Vars.stationClass}}
