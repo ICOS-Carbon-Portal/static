@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "outDir": "./tsTarget/",
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "module": "ESNext",
+    "lib": [ "ESNext", "DOM" ],
+    "target": "ESNext",
+    "allowJs": true,
+    "jsx": "react",
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "strict": true
+  },
+  "files": [ "src/main.tsx" ],
+
+}

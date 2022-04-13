@@ -1,17 +1,18 @@
-export type Modifiers = Partial<Obj<(v: string, row: Obj<BindingEntry, VarName>) => string, VarName>>
+export type Modifiers = Partial<Dict<(v: string, row: Dict<BindingEntry, VarName>) => string, VarName>>
 export type ParsedSparqlValue = number | Date | string
-export type TransformPointFn = (lon: number, lat: number) => [number, number]
+export type TransformPointFn = (lonOrX: number, latOrY: number) => [number, number]
+export type ReducedStation = Partial<Dict<ParsedSparqlValue | [number, number] | boolean, VarName | 'type' | 'point' | 'Short_name' | 'id' | 'hasLandingPage'>>
 
 export class StationParser {
-	constructor(private readonly countries: Obj, private readonly transformPointFn?: TransformPointFn) { }
+	constructor(private readonly countries: Dict, private readonly transformPointFn?: TransformPointFn) { }
 
-	parse(bindings: Obj<BindingEntry, VarName>[]) {
+	parse(bindings: Dict<BindingEntry, VarName>[]) {
 		return this.transformPointFn === undefined
 			? this.parseToRowColArrays(bindings)
 			: this.parseToObjectArray(bindings);
 	}
 
-	private parseToRowColArrays(bindings: Obj<BindingEntry, VarName>[]) {
+	private parseToRowColArrays(bindings: Dict<BindingEntry, VarName>[]) {
 		const modifiers = this.commonModifiers(this.countries);
 
 		var rows = bindings.map(row =>
@@ -28,13 +29,13 @@ export class StationParser {
 		});
 	}
 
-	private parseToObjectArray(bindings: Obj<BindingEntry, VarName>[]) {
+	private parseToObjectArray(bindings: Dict<BindingEntry, VarName>[]) {
 		const localModifiers = {
-			[Vars.stationId]: (v: string, row: Obj<BindingEntry, VarName>) => (row[Vars.prodUri]
+			[Vars.stationId]: (v: string, row: Dict<BindingEntry, VarName>) => (row[Vars.prodUri]
 				? row[Vars.prodUri].value
 				: v
 			),
-			[Vars.labelingDate]: (v: string, row: Obj<BindingEntry, VarName>) => (row[Vars.labelingDate]
+			[Vars.labelingDate]: (v: string, row: Dict<BindingEntry, VarName>) => (row[Vars.labelingDate]
 				? row[Vars.labelingDate].value
 				: ""
 			),
@@ -45,13 +46,12 @@ export class StationParser {
 			return !isNaN(parseInt(n)) && isFinite(n);
 		};
 
-		type ReducedStations = Partial<Obj<ParsedSparqlValue | [number, number] | boolean, VarName | 'type' | 'point' | 'Short_name' | 'id' | 'hasLandingPage'>>
-		return bindings.reduce<ReducedStations[]>((stationAcc, currStation) => {
+		return bindings.reduce<ReducedStation[]>((stationAcc, currStation) => {
 			// Do not include stations that does not have any geographical reference
 			if (currStation.lat === undefined && currStation.lon === undefined && (currStation.geoJson === undefined || currStation.geoJson.value === ""))
 				return stationAcc;
 
-			const st = Columns.reduce<ReducedStations>((acc, col) => {
+			const st = Columns.reduce<ReducedStation>((acc, col) => {
 				const modifier = modifiers[col];
 				const parsed = modifier === undefined
 					? this.sparqlBindingToValue(currStation[col])
@@ -82,21 +82,21 @@ export class StationParser {
 		}, []);
 	}
 
-	private commonModifiers(countries: Obj): Modifiers {
+	private commonModifiers(countries: Dict): Modifiers {
 		return {
-			[Vars.theme]: (v: string, row: Obj<BindingEntry, VarName>) => themeName[row[Vars.themeShort].value as ThemeShort] ?? "?",
+			[Vars.theme]: (v: string, row: Dict<BindingEntry, VarName>) => themeName[row[Vars.themeShort].value as ThemeShort] ?? "?",
 			[Vars.country]: (v: string) => `${countries[v]} (${v})`,
 			[Vars.pi]: (v: string) => v.split(';').sort().join("<br>"),
 			[Vars.stationClass]: (v: string) => (v == "Ass" ? "Associated" : v),
 			[Vars.siteType]: (v: string) => v.toLowerCase(),
-			[Vars.stationId]: (v: string, row: Obj<BindingEntry, VarName>) => (row[Vars.prodUri]
+			[Vars.stationId]: (v: string, row: Dict<BindingEntry, VarName>) => (row[Vars.prodUri]
 				? `<a target="_blank" href="${row[Vars.prodUri].value}">${v}</a>`
 				: v
 			)
 		};
 	}
 
-	private sparqlBindingToValue(b: Obj) {
+	private sparqlBindingToValue(b: Dict) {
 		if (!b || (b && b.value === "?")) return "";
 
 		switch (b.datatype) {
@@ -110,10 +110,8 @@ export class StationParser {
 	}
 }
 
-export type Obj<Value = string, Keys extends string | number | symbol = string> = {
-	[Key in Keys]: Value
-}
-export type BindingEntry = Obj<string, 'type' | 'value' | 'datatype'>
+export type Dict<Value = string, Keys extends string | number | symbol = string> = Record<Keys, Value>
+export type BindingEntry = Dict<string, 'type' | 'value' | 'datatype'>
 export type VarKey = keyof typeof Vars;
 export type VarName = typeof Vars[VarKey];
 export type SparqResp = {
@@ -121,7 +119,7 @@ export type SparqResp = {
 		vars: string[]
 	}
 	results: {
-		bindings: Obj<BindingEntry, VarName>[]
+		bindings: Dict<BindingEntry, VarName>[]
 	}
 }
 
@@ -131,7 +129,7 @@ export const urls = {
 };
 
 export type ThemeShort = 'AS' | 'ES' | 'OS'
-export const themeName: Obj<string, ThemeShort> = { AS: "Atmosphere", ES: "Ecosystem", OS: "Ocean" };
+export const themeName: Dict<string, ThemeShort> = { AS: "Atmosphere", ES: "Ecosystem", OS: "Ocean" };
 
 export const getIconUrl = (themeShort: ThemeShort) => `https://static.icos-cp.eu/share/stations/icons/${themeShort.toLowerCase()}.png`;
 
@@ -142,6 +140,7 @@ export const Vars = {
 	geoJson: 'geoJson',
 	prodUri: 'prodUri',
 	stationId: 'Id',
+	shortStationName: 'Short_name',
 	stationName: 'Name',
 	country: 'Country',
 	theme: 'Theme',
@@ -245,13 +244,12 @@ const fetchStations = (query: typeof provQuery | typeof prodQuery, acceptCachedR
 };
 
 const mergeProvAndProd = ([prov, prod]: [prov: SparqResp, prod: SparqResp]) => {
-	const prodLookup = prod.results.bindings.reduce<Obj<Obj<BindingEntry, VarName>>>((acc, next) => {
+	const prodLookup = prod.results.bindings.reduce<Dict<Dict<BindingEntry, VarName>>>((acc, next) => {
 		acc[next.s.value] = next;
 		return acc;
 	}, {});
 	return prov.results.bindings.map(row => ({ ...row, ...prodLookup[row.s.value] }));
 };
-
 
 export const fetchMergeParseStations = (stationParser: StationParser) => {
 	return Promise.all([fetchStations(provQuery, true), fetchStations(prodQuery, true)])
