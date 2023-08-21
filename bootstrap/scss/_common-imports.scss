@@ -1,6 +1,10 @@
+// Override Bootstrap's Sass default variables
+// See https://github.com/twbs/examples/blob/main/sass-js/scss/styles.scss
+
 // Configuration
 @import "bootstrap/scss/functions"; // Required
 @import "bootstrap/scss/variables"; // Required
+@import "bootstrap/scss/variables-dark"; // Required
 @import "bootstrap/scss/maps"; // Required
 @import "bootstrap/scss/mixins"; // Required
 
