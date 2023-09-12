@@ -39,18 +39,17 @@
   },
   "devDependencies": {
     "@types/file-saver": "^2.0.5",
-    "@types/ol": "6.5.3",
     "@types/proj4": "^2.5.2",
     "@types/topojson": "^3.2.3",
-    "@webpack-cli/generators": "3.0.1",
+    "@webpack-cli/generators": "3.0.7",
     "clean-terminal-webpack-plugin": "^3.0.0",
     "filemanager-webpack-plugin": "^8.0.0",
-    "mini-css-extract-plugin": "^2.7.5",
-    "ts-loader": "^9.4.2",
-    "typescript": "5.0.2",
-    "webpack": "^5.76.2",
-    "webpack-cli": "^5.0.1",
-    "webpack-merge": "^5.8.0"
+    "mini-css-extract-plugin": "^2.7.6",
+    "ts-loader": "^9.4.4",
+    "typescript": "5.2.2",
+    "webpack": "^5.88.2",
+    "webpack-cli": "^5.1.4",
+    "webpack-merge": "^5.9.0"
   },
   "dependencies": {
     "@turf/bbox-clip": "^6.5.0",
@@ -61,7 +60,7 @@
     "icos-cp-ol": "4.1.0",
     "icos-cp-toaster": "0.6.4",
     "icos-cp-utils": "0.1.6",
-    "ol": "6.5.0",
+    "ol": "8.1.0",
     "proj4": "^2.9.0",
     "topojson": "3.0.2"
   }

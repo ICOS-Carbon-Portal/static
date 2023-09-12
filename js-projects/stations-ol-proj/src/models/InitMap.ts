@@ -287,7 +287,7 @@ export default class InitMap {
 		const popup = this.popup;
 
 		const select = new Select({
-			condition: condition.pointerMove,
+			condition: condition.click,
 			layers: layer => layer.get('interactive'),
 			multi: true,
 			hitTolerance: this.mapOptions.hitTolerance
@@ -307,22 +307,27 @@ export default class InitMap {
 				popup.resetContent();
 
 				features.getArray().some((feature, idx) => {
-					if (idx <= 1) {
-						const id = feature.get(Vars.shortStationName);
+					const border = idx > 0 ? 'border-top: 1px solid #eee;' : '';
+					const content = `${feature.get(Vars.stationName)} (${feature.get(Vars.shortStationName)})`;
+					const htmlContent = feature.get("hasLandingPage")
+						? `<a href="${feature.get(Vars.stationId)}">${content}</a>`
+						: content;
 
-						popup.addContent(`Station information for ${id}`, {
-							Name: feature.get(Vars.stationName),
-							Country: feature.get(Vars.country),
-							Theme: feature.get(Vars.theme),
-							'Site type': feature.get(Vars.siteType),
-							'PI names': feature.get(Vars.pi),
-						});
-
-					} else {
-						popup.addTxtToContent(`Zoom in to see ${features.getLength() - 2} more`);
-						return true;
-					}
+					popup.popupElement.innerHTML += `<div style="padding: 0.5rem; white-space: nowrap; ${border} ;">${htmlContent}</div>`;
 				});
+			}
+		});
+
+		map.on('pointermove', function (e) {
+			const pixel = map.getEventPixel(e.originalEvent);
+			const hit = map.hasFeatureAtPixel(pixel);
+			const features = map.getFeaturesAtPixel(pixel)
+				.filter(feature => {
+					return !!feature.get(Vars.stationId)
+				});
+			const target = map.getTargetElement();
+			if (target) {
+				target.style.cursor = features.length && hit ? 'pointer' : '';
 			}
 		});
 	}
