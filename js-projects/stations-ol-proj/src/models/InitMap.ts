@@ -309,8 +309,9 @@ export default class InitMap {
 				features.getArray().some((feature, idx) => {
 					const border = idx > 0 ? 'border-top: 1px solid #eee;' : '';
 					const content = `${feature.get(Vars.stationName)} (${feature.get(Vars.shortStationName)})`;
+					const url = feature.get(Vars.stationId).replace(/^http:\/\//i, 'https://')
 					const htmlContent = feature.get("hasLandingPage")
-						? `<a href="${feature.get(Vars.stationId)}">${content}</a>`
+						? `<a href="${url}" target="_parent">${content}</a>`
 						: content;
 
 					popup.popupElement.innerHTML += `<div style="padding: 0.5rem; white-space: nowrap; ${border} ;">${htmlContent}</div>`;
