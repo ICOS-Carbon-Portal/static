@@ -1,0 +1,22 @@
+{
+  "name": "sites-stations-leaflet",
+  "version": "1.0.0",
+  "description": "SITES stations map",
+  "private": true,
+  "source": "src/index.html",
+  "scripts": {
+    "start": "parcel",
+    "build": "parcel build --public-url /share/sites/station-map"
+  },
+  "keywords": [],
+  "author": "Jonathan Thiry",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/leaflet": "^1.9.4",
+    "parcel": "^2.9.3"
+  },
+  "dependencies": {
+    "icos-cp-backend": "^0.5.2",
+    "leaflet": "^1.9.4"
+  }
+}
