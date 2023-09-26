@@ -44,17 +44,12 @@ function initMap(stations: Station[]) {
 	stations.forEach(station => {
 		const popupContent = `
 			<h3>${station.name}</h3>
-			<a href="${station.url}">Read more</a>
+			<a href="${station.url}" target="_top">Read more</a>
 		`;
 		L.marker([station.lat, station.lon])
 			.bindPopup(popupContent)
 			.addTo(map);
 	});
-
-	// L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-	// 	maxZoom: 19,
-	// 	attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-	// }).addTo(map);
 
 }
 
