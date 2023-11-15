@@ -154,6 +154,8 @@ export default class InitMap {
 			this.layerControl.addCountrySelectors(featureFilter, countryFilter, this.persistedMapPropsWasUpdated.bind(this));
 		}
 
+		this.addInteractivity();
+
 		const minWidth = 600;
 		const width = document.getElementsByTagName('body')[0].getBoundingClientRect().width;
 		if (width < minWidth) return;
@@ -162,7 +164,6 @@ export default class InitMap {
 			this.olWrapper.attributionUpdater = new Copyright(attributions, projection, 'baseMapAttribution', minWidth);
 		});
 
-		this.addInteractivity();
 	}
 
 	private async addListeners(view: View, updatePersistedMapProps: (mapProps: PersistedMapProps) => void) {
