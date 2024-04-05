@@ -32,6 +32,7 @@ import {
 	SupportedSRIDs,
 	TransformPointFn, VectorLayerExtended
 } from "icos-cp-ol";
+import VectorSource from "ol/source/Vector";
 
 export type InitMapOptions = MapOptionsExpanded & {
 	sridsInMap: Record<SupportedSRIDs, string>
@@ -92,7 +93,7 @@ export default class InitMap {
 		this.useCountrySelector = mapOptions.srid !== "3006";
 
 		const epsgCode = `EPSG:${mapOptions.srid}` as EpsgCode;
-		const projection = getProjection(epsgCode);
+		const projection = getProjection(epsgCode)!;
 		this.pointTransformer = getTransformPointFn("EPSG:4326", epsgCode);
 
 		const tileLayers = getBaseMapLayers(mapOptions.baseMap, mapOptions.baseMapFilter);
@@ -386,7 +387,7 @@ function updateLayerCtrl(self: LayerControl): () => void {
 		}
 
 		if (toggles.length) {
-			const addToggleLayer = (toggleLayer: VectorLayer) => {
+			const addToggleLayer = (toggleLayer: VectorLayer<VectorSource>) => {
 				const legendItem = getLayerIcon(toggleLayer);
 				const row = document.createElement('div');
 				row.setAttribute('style', 'display:table;');
@@ -436,10 +437,10 @@ function updateLayerCtrl(self: LayerControl): () => void {
 
 			toggles
 				.filter(toggleLayer => toggleLayer.get('id') === countryBordersId)
-				.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer));
+				.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer<VectorSource>));
 			toggles
 				.filter(toggleLayer => toggleLayer.get('id') !== countryBordersId)
-				.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer));
+				.forEach(toggleLayer => addToggleLayer(toggleLayer as VectorLayer<VectorSource>));
 
 			self.layersDiv.appendChild(root);
 		}
@@ -522,7 +523,7 @@ export type LayerFilterFn = (
 	showNonLabelledStations: boolean
 ) => void
 const layerFilterFn: LayerFilterFn = (layer, selectedCountry, showNonLabelledStations) => {
-	layer.getSource().forEachFeature(feature => {
+	layer.getSource()?.forEachFeature(feature => {
 		const showFeature = selectedCountry === "0" || feature.get(Vars.country) === selectedCountry
 			&& (showNonLabelledStations || feature.get(Vars.labelingDate) !== "");
 		feature.setStyle(showFeature ? undefined : new Style());

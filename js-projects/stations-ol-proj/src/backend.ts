@@ -1,5 +1,5 @@
 import {getJson} from 'icos-cp-backend';
-import {feature} from 'topojson';
+import {feature} from 'topojson-client';
 import * as GeoJSON from "geojson";
 import { GeometryCollection } from "topojson-specification";
 import {GeoJsonFeatureCollection} from "icos-cp-ol";
