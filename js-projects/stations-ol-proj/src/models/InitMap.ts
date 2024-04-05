@@ -252,7 +252,7 @@ export default class InitMap {
 		const newSearchParams = this.persistedMapPropsToUrlSearch();
 
 		if (document.location.search !== newSearchParams)
-			history.pushState({}, "", location.origin + location.pathname + newSearchParams);
+			history.replaceState({}, "", location.origin + location.pathname + newSearchParams);
 	}
 
 	private persistedMapPropsToUrlSearch() {
