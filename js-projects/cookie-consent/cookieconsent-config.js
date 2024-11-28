@@ -2,6 +2,10 @@ import 'https://cdn.jsdelivr.net/gh/orestbida/cookieconsent@3.0.1/dist/cookiecon
 
 CookieConsent.run({
 
+	cookie: {
+		domain: '.icos-cp.eu',
+	},
+
 	categories: {
 		necessary: {
 			enabled: true,  // this category is enabled by default
@@ -40,7 +44,7 @@ CookieConsent.run({
 					sections: [
 						{
 							title: 'Strictly Necessary cookies',
-							description: 'Once you create an account and log in to it, we use a cookie to keep you connected. This cookie is essential for the proper functioning of the website and cannot be disabled.”',
+							description: 'Once you create an account and log in to it, we use a cookie to keep you connected. This cookie is essential for the proper functioning of the website and cannot be disabled.',
 							linkedCategory: 'necessary'
 						},
 						{
