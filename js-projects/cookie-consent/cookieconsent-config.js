@@ -20,6 +20,18 @@ CookieConsent.run({
 					}
 				}
 			}
+		},
+		functional: {
+			services: {
+				freshdesk: {
+					label: 'Freshdesk',
+					onAccept: () => {
+						if (window.fwSettings) {
+							CookieConsent.loadScript('https://euc-widget.freshworks.com/widgets/101000001800.js');
+						}
+					}
+				}
+			}
 		}
 	},
 
@@ -51,6 +63,11 @@ CookieConsent.run({
 							title: 'Performance and Analytics',
 							description: 'These cookies collect information about how you use our website. All of the data is anonymized and cannot be used to identify you.',
 							linkedCategory: 'analytics'
+						},
+						{
+							title: 'Functional',
+							description: 'These cookies make it possible to use Freshdesk, a service we use to answer your questions.',
+							linkedCategory: 'functional'
 						},
 						{
 							title: 'More information',
