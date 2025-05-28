@@ -54,7 +54,7 @@ function initMap(stations: Station[]) {
 }
 
 function getLmUrl(layer) {
-	return "//maps.icos-cp.eu/lm/open/topowebb-ccby/v1/wmts/1.0.0/"
+	return "//maps.fieldsites.se/lm/open/topowebb-ccby/v1/wmts/1.0.0/"
 		+ layer
 		+ "/default/3857/{z}/{y}/{x}.png";
 }
