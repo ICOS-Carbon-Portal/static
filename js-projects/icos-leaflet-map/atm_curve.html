@@ -7,7 +7,7 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<title>ICOS Map</title>
+	<title>ICOS ATC Curve Stations Map</title>
 
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
 		integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -58,6 +58,7 @@ select ?station ?lat ?lon ?name ?cc where {
 	}
 	?station cpmeta:hasName ?name ; cpmeta:countryCode ?cc ;
 	cpmeta:hasLatitude ?lat ; cpmeta:hasLongitude ?lon .
+	filter(?lat > 0)
 }
 order by ?station`;
 </script>
