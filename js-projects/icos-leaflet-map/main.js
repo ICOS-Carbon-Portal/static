@@ -5,14 +5,6 @@ const map = L.map('map', {
 	touchZoom: false
 }).setView([58, 15], 4);
 
-const sparqlQuery =`PREFIX cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-SELECT ?station ?lat ?lon ?name ?cc
-FROM <http://meta.icos-cp.eu/resources/icos/>
-WHERE {
-	?station cpmeta:hasWebpageElements ?el; cpmeta:hasLatitude ?lat; cpmeta:hasLongitude ?lon; cpmeta:hasName ?name; cpmeta:countryCode ?cc
-}`
-
 initMap();
 
 async function initMap() {

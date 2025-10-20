@@ -21,6 +21,14 @@
 
 <body>
 	<div id="map"></div>
-
+	<script type="text/javascript">
+	const sparqlQuery =`PREFIX cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?station ?lat ?lon ?name ?cc
+FROM <http://meta.icos-cp.eu/resources/icos/>
+WHERE {
+	?station cpmeta:hasWebpageElements ?el; cpmeta:hasLatitude ?lat; cpmeta:hasLongitude ?lon; cpmeta:hasName ?name; cpmeta:countryCode ?cc
+}`;
+</script>
 	<script type="text/javascript" src="./main.js"></script>
 </body>
