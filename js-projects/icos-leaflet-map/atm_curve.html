@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<link rel="shortcut icon" type="image/png" href="//static.icos-cp.eu/images/favicon.png" />
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>ICOS Map</title>
+
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+		integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+	<link rel="stylesheet" href="./styles.css">
+
+	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+		integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+	<script src="https://unpkg.com/topojson@3.0.2/dist/topojson.min.js"></script>
+</head>
+
+<body>
+	<div id="map"></div>
+	<script type="text/javascript">
+	const sparqlQuery =`prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
+prefix prov: <http://www.w3.org/ns/prov#>
+select ?station ?lat ?lon ?name ?cc where {
+	{
+		select
+			?station
+			(group_concat(distinct ?varName; separator='|') as ?speciesList)
+			(group_concat(distinct ?height; separator='|') as ?heightsList)
+			(group_concat(distinct ?speciesHeight; separator='|') as ?speciesHeightsList)
+		where{
+			?spec cpmeta:hasDataTheme <http://meta.icos-cp.eu/resources/themes/atmosphere> ;
+				cpmeta:hasAssociatedProject <http://meta.icos-cp.eu/resources/projects/icos> ;
+			cpmeta:containsDataset ?ds .
+			filter(?ds != <http://meta.icos-cp.eu/resources/cpmeta/atcMeteoTimeSer>)
+			?ds cpmeta:hasColumn ?col .
+			filter exists {[] cpmeta:isQualityFlagFor ?col}
+			?dobj cpmeta:hasObjectSpec ?spec ;
+					cpmeta:wasAcquiredBy/prov:wasAssociatedWith ?station ;
+					cpmeta:hasSizeInBytes ?size ;
+					cpmeta:wasAcquiredBy/cpmeta:hasSamplingHeight ?height .
+			FILTER NOT EXISTS {[] cpmeta:isNextVersionOf ?dobj}
+			?col cpmeta:hasColumnTitle ?varName .
+			{
+				{FILTER NOT EXISTS {?dobj cpmeta:hasVariableName ?actVar}}
+				UNION
+				{
+					?dobj cpmeta:hasVariableName ?actVar
+					filter(?actVar = ?varName)
+				}
+			}
+			bind(concat(?varName, '/', str(?height)) as ?speciesHeight)
+		}
+		group by ?station
+	}
+	?station cpmeta:hasName ?name ; cpmeta:countryCode ?cc ;
+	cpmeta:hasLatitude ?lat ; cpmeta:hasLongitude ?lon .
+}
+order by ?station`;
+</script>
+	<script type="text/javascript" src="./main.js"></script>
+</body>
