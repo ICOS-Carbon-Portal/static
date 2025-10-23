@@ -1,9 +1,10 @@
+const zoomSetting = mapSettings.allowZoom ?? false;
 const map = L.map('map', {
-	zoomControl: false,
-	doubleClickZoom: false,
-	scrollWheelZoom: false,
-	touchZoom: false
-}).setView([58, 15], 4);
+	zoomControl: zoomSetting,
+	doubleClickZoom: zoomSetting,
+	scrollWheelZoom: zoomSetting,
+	touchZoom: zoomSetting
+}).setView(mapSettings.coords ?? [58, 15], mapSettings.zoom ?? 4);
 
 initMap();
 

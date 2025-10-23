@@ -22,6 +22,13 @@
 <body>
 	<div id="map"></div>
 	<script type="text/javascript">
+		const mapSettings = {zoom: 2, coords: [68, 15], allowZoom: true};
+		const factor = 0.7;
+		L.Icon.Default.prototype.options.iconSize = L.Icon.Default.prototype.options.iconSize.map(x => x*factor);
+		L.Icon.Default.prototype.options.iconAnchor = L.Icon.Default.prototype.options.iconAnchor.map(x => x*factor);
+		L.Icon.Default.prototype.options.popupAnchor = L.Icon.Default.prototype.options.popupAnchor.map(x => x*factor);
+		L.Icon.Default.prototype.options.shadowSize = L.Icon.Default.prototype.options.shadowSize.map(x => x*factor);
+		L.Icon.Default.prototype.options.tooltipAnchor = L.Icon.Default.prototype.options.tooltipAnchor.map(x => x*factor);
 	const sparqlQuery =`prefix cpmeta: <http://meta.icos-cp.eu/ontologies/cpmeta/>
 prefix prov: <http://www.w3.org/ns/prov#>
 select ?station ?lat ?lon ?name ?cc where {
