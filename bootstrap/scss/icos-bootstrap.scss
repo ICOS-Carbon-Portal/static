@@ -3,11 +3,18 @@
 // Toggle global options
 $enable-shadows: true;
 
+//$primary: #00abc9;
+//$success: #5cb85c
 // Customize some defaults
-$primary: #00abc9;
-$success: #5cb85c;
+$primary:       #00708A; // Accessible ICOS Cyan shade
+$secondary:     #E5F7FA; // ICOS Cyan tint
+$info:          #00ABC9; // ICOS Cyan (2019)
+$danger:        #E41C63; // ICOS Magenta (2019)
+$success:       #8AEA92;
+$warning:       #F4D35E;
+$light:         #FFFFFF; // White
+$dark:          #414042; // ICOS Grey 90
 $border-radius: .4rem;
-$min-contrast-ratio: 2.5;
 $font-family-base: "Open Sans", system-ui, -apple-system, sans-serif;
 
 // Import Bootstrap's CSS
