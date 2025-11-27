@@ -7,14 +7,16 @@ $enable-shadows: true;
 //$success: #5cb85c
 // Customize some defaults
 $primary:       #00708A; // Accessible ICOS Cyan shade
-$secondary:     #E5F7FA; // ICOS Cyan tint
+$secondary:     #939598; // ICOS Grey 50
 $info:          #00ABC9; // ICOS Cyan (2019)
 $danger:        #E41C63; // ICOS Magenta (2019)
 $success:       #8AEA92;
 $warning:       #F4D35E;
-$light:         #FFFFFF; // White
-$dark:          #414042; // ICOS Grey 90
+$light:         #FFFFFF; // From Hurja
+$dark:          #353535; // From Hurja
 $border-radius: .4rem;
+$btn-border-radius: 100px;
+$input-btn-padding-x: 1.25rem;
 $font-family-base: "Open Sans", system-ui, -apple-system, sans-serif;
 
 // Import Bootstrap's CSS
