@@ -7,18 +7,33 @@ $enable-shadows: true;
 //$success: #5cb85c
 //$secondary: #939598; // ICOS Gray 50
 // Customize some defaults
-$primary:       #00708A; // Accessible ICOS Cyan shade
-$secondary:     #656567; // Gray (from Hurja) - contra
+$primary:       #00708A; // Accessible ICOS Cyan shade (new)
+$secondary:     #656567; // Gray (new)
 $info:          #00ABC9; // ICOS Cyan (2019)
 $danger:        #E41C63; // ICOS Magenta (2019)
 $success:       #8AEA92;
 $warning:       #F4D35E;
-$light:         #FFFFFF; // From Hurja
-$dark:          #353535; // From Hurja
+$light:         #FFFFFF; // White
+$dark:          #353535; // Dark Gray (new)
+
+$body-color: $dark;
+
 $border-radius: .4rem;
 $btn-border-radius: 100px;
 $input-btn-padding-x: 1.25rem;
 $font-family-base: "Open Sans", system-ui, -apple-system, sans-serif;
+$headings-font-weight: 600;
+
+// Same as default but defined early for use below:
+$font-size-base: 1rem;
+
+// Override default h3, h4, h6 font sizes, based on new redesign
+//$h1-font-size: $font-size-base * 2.5 !default;
+//$h2-font-size: $font-size-base * 2 !default;
+$h3-font-size: $font-size-base * 1.625;
+$h4-font-size: $font-size-base * 1.375;
+//$h5-font-size: $font-size-base * 1.25 !default;
+$h6-font-size: $font-size-base * 1.125;
 
 // Import Bootstrap's CSS
 @import 'common-imports';
