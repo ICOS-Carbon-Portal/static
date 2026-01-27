@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "autoprefixer": "^10.4.22",
+    "baseline-browser-mapping": "^2.9.18",
     "nodemon": "^3.1.11",
     "npm-run-all": "^4.1.5",
     "postcss": "^8.5.6",

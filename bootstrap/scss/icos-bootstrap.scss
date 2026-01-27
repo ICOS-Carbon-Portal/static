@@ -5,18 +5,21 @@ $enable-shadows: true;
 
 //$primary: #00abc9;
 //$success: #5cb85c
+//$success: #AEC000; // ICOS Green (2019)
 //$secondary: #939598; // ICOS Gray 50
 // Customize some defaults
 $primary:       #00708A; // Accessible ICOS Cyan shade (new)
 $secondary:     #656567; // Gray (new)
 $info:          #00ABC9; // ICOS Cyan (2019)
 $danger:        #E41C63; // ICOS Magenta (2019)
-$success:       #AEC000; // ICOS Green (2019)
+$success:       #5cb85c;
 $warning:       #F4D35E;
 $light:         #FFFFFF; // White
 $dark:          #353535; // Dark Gray (new)
 
 $body-color: $dark;
+$table-color: $dark;
+$table-hover-bg-factor: .05;
 
 $border-radius: .4rem;
 $btn-border-radius: 100px;
@@ -28,7 +31,6 @@ $font-family-base: "Open Sans", system-ui, -apple-system, sans-serif;
 
 $headings-font-weight: 600;
 $headings-margin-bottom: 1rem;
-
 
 // Same as default but defined early for use below:
 $font-size-base: 1rem;
