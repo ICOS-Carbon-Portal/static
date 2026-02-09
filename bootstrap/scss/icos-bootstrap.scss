@@ -3,17 +3,13 @@
 // Toggle global options
 $enable-shadows: true;
 
-//$primary: #00abc9;
-//$success: #5cb85c
-//$success: #AEC000; // ICOS Green (2019)
-//$secondary: #939598; // ICOS Gray 50
 // Customize some defaults
 $primary:       #00708A; // Accessible ICOS Cyan shade (new)
 $secondary:     #656567; // Gray (new)
 $info:          #00ABC9; // ICOS Cyan (2019)
 $danger:        #E41C63; // ICOS Magenta (2019)
-$success:       #5cb85c;
-$warning:       #F4D35E;
+$success:       #5CB85C; // New
+$warning:       #F4D35E; // New
 $light:         #FFFFFF; // White
 $dark:          #353535; // Dark Gray (new)
 
@@ -32,8 +28,9 @@ $font-family-base: "Open Sans", system-ui, -apple-system, sans-serif;
 $headings-font-weight: 600;
 $headings-margin-bottom: 1rem;
 
-// Same as default but defined early for use below:
+// Same as default but defined early for use later on:
 $font-size-base: 1rem;
+$spacer: 1rem;
 
 // Override default h3, h4, h6 font sizes, based on new redesign
 //$h1-font-size: $font-size-base * 2.5 !default;
@@ -43,18 +40,17 @@ $h4-font-size: $font-size-base * 1.375;
 //$h5-font-size: $font-size-base * 1.25 !default;
 $h6-font-size: $font-size-base * 1.125;
 
-$spacer: 1rem;
-
+// Add additional spacers
 $spacers: (
-  0: 0,
-  1: $spacer * .25,
-  2: $spacer * .5,
-  25: $spacer * .75,
-  3: $spacer,
-  4: $spacer * 1.5,
-  5: $spacer * 3,
-  6: $spacer * 5,
-  7: $spacer * 8.75
+  0: 0, // default
+  1: $spacer * .25, // default
+  2: $spacer * .5, // default
+  25: $spacer * .75, // added; read as: spacer 2.5
+  3: $spacer, // default
+  4: $spacer * 1.5, // default
+  5: $spacer * 3, // default
+  6: $spacer * 5, // added
+  7: $spacer * 8.75 // added
 );
 
 // Import Bootstrap's CSS
