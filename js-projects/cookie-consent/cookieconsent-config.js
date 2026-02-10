@@ -16,7 +16,13 @@ CookieConsent.run({
 				matomo: {
 					label: 'Matomo',
 					onAccept: () => {
-						_paq.push(['setCookieConsentGiven']);
+						function pushPaq() {
+							if(_paq) {
+								clearInterval(paqRetry);
+								_paq.push(['setCookieConsentGiven']);
+							}
+						}
+						const paqRetry = setInterval(pushPaq, 1000);
 					}
 				}
 			}
