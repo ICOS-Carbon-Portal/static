@@ -16,10 +16,16 @@ CookieConsent.run({
 				matomo: {
 					label: 'Matomo',
 					onAccept: () => {
+						let totalTime = 0;
 						function pushPaq() {
 							if(_paq) {
 								clearInterval(paqRetry);
 								_paq.push(['setCookieConsentGiven']);
+							} else {
+								totalTime += 1000;
+								if (totalTime > 60000) {
+									clearInterval(paqRetry);
+								}
 							}
 						}
 						const paqRetry = setInterval(pushPaq, 1000);
