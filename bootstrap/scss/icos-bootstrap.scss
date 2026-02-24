@@ -10,7 +10,7 @@ $info:          #00ABC9; // ICOS Cyan (2019)
 $danger:        #E41C63; // ICOS Magenta (2019)
 $success:       #5CB85C; // New
 $warning:       #F4D35E; // New
-$light:         #FFFFFF; // White
+//$light:       #F8F9FA; // Default Bootstrap $light
 $dark:          #353535; // Dark Gray (new)
 
 $body-color: $dark;
@@ -18,10 +18,6 @@ $table-color: $dark;
 $table-hover-bg-factor: .05;
 
 $border-radius: .4rem;
-$btn-border-radius: 100px;
-
-$btn-font-weight: 600;
-$input-btn-padding-x: 1.25rem;
 
 $font-family-base: "Open Sans", system-ui, -apple-system, sans-serif;
 
@@ -58,3 +54,20 @@ $spacers: (
 
 // Custom styles
 @import 'shared-custom-styles';
+
+.btn-white {
+  --#{$prefix}btn-color: #000000;
+  --#{$prefix}btn-bg: #FFFFFF;
+  --#{$prefix}btn-border-color: #FFFFFF;
+  --#{$prefix}btn-hover-color: #000000;
+  --#{$prefix}btn-hover-bg: rgb(217, 217, 217);
+  --#{$prefix}btn-hover-border-color: #cccccc;
+  --#{$prefix}btn-focus-shadow-rgb: 217, 217, 217;
+  --#{$prefix}btn-active-color: #000000;
+  --#{$prefix}btn-active-bg: #cccccc;
+  --#{$prefix}btn-active-border-color: rgb(191, 191, 191);
+  --#{$prefix}btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+  --#{$prefix}btn-disabled-color: #000000;
+  --#{$prefix}btn-disabled-bg: #FFFFFF;
+  --#{$prefix}btn-disabled-border-color: #FFFFFF;
+}
