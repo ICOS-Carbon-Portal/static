@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "npm run css",
-    "css-compile": "sass --style compressed --source-map --embed-sources --no-error-css --load-path=node_modules scss/:assets/css/",
+    "css-compile": "sass --silence-deprecation=import,color-functions,global-builtin --style compressed --source-map --embed-sources --no-error-css --load-path=node_modules scss/:assets/css/",
     "css-lint": "stylelint scss/",
     "css-prefix": "postcss --replace \"assets/css/*.css\" --use autoprefixer --map",
     "css-purge": "purgecss --keyframes --css \"assets/css/*.css\" --content index.html \"node_modules/bootstrap/js/dist/dom/*.js\" \"node_modules/bootstrap/js/dist/{base-component,dropdown,modal,offcanvas}.js\" --output assets/css/",
