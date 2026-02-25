@@ -16,19 +16,36 @@ CookieConsent.run({
 				matomo: {
 					label: 'Matomo',
 					onAccept: () => {
-						let totalTime = 0;
-						function pushPaq() {
-							if(_paq) {
-								clearInterval(paqRetry);
-								_paq.push(['setCookieConsentGiven']);
-							} else {
-								totalTime += 1000;
-								if (totalTime > 60000) {
-									clearInterval(paqRetry);
+						let waitingTime = 0;
+						function acceptMatomo() {
+							if (typeof _paq === "undefined") {
+								waitingTime += 250;
+								if (waitingTime > 10000) {
+									clearInterval(acceptRetry);
 								}
+							} else {
+								clearInterval(acceptRetry);
+								_paq.push(['setCookieConsentGiven']);
+								_paq.push(['rememberCookieConsentGiven']);
 							}
 						}
-						const paqRetry = setInterval(pushPaq, 1000);
+						const acceptRetry = setInterval(acceptMatomo, 250);
+					},
+					onReject: () => {
+						let waitingTime = 0;
+						function rejectMatomo() {
+							if (typeof _paq === "undefined") {
+								waitingTime += 250;
+								if (waitingTime > 10000) {
+									clearInterval(rejectRetry);
+								}
+							} else {
+								clearInterval(rejectRetry);
+								_paq.push(['forgetCookieConsentGiven']);  
+								_paq.push(['deleteCookies']);
+							}
+						}
+						const rejectRetry = setInterval(rejectMatomo, 250);
 					}
 				}
 			}
