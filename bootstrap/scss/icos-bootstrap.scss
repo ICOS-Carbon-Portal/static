@@ -48,12 +48,10 @@ $spacers: (
   0: 0, // default
   1: $spacer * .25, // default
   2: $spacer * .5, // default
-  25: $spacer * .75, // added; read as: spacer 2.5
   3: $spacer, // default
   4: $spacer * 1.5, // default
   5: $spacer * 3, // default
   6: $spacer * 5, // added
-  7: $spacer * 8.75 // added
 );
 
 // Import Bootstrap's CSS
