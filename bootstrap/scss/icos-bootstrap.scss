@@ -4,11 +4,55 @@
 $enable-shadows: true;
 
 // Customize some defaults
-$primary: #00abc9;
-$success: #5cb85c;
+$primary:       #00708A; // Accessible ICOS Cyan shade (new)
+$secondary:     #656567; // Gray (new)
+$info:          #00ABC9; // ICOS Cyan (2019)
+$danger:        #E41C63; // ICOS Magenta (2019)
+$success:       #5CB85C; // New
+$warning:       #F4D35E; // New
+//$light:       #F8F9FA; // Default Bootstrap $light
+$dark:          #353535; // Dark Gray (new)
+
+$body-color: $dark;
+$table-color: $dark;
+$table-hover-bg-factor: .05;
+
 $border-radius: .4rem;
-$min-contrast-ratio: 2.5;
+
 $font-family-base: "Open Sans", system-ui, -apple-system, sans-serif;
+
+$headings-font-weight: 600;
+$headings-margin-bottom: 1rem;
+
+// Same as default but defined early for use later on:
+$font-size-base: 1rem;
+$spacer: 1rem;
+
+// Override default h3, h4, h6 font sizes, based on new redesign
+//$h1-font-size: $font-size-base * 2.5 !default;
+//$h2-font-size: $font-size-base * 2 !default;
+$h3-font-size: $font-size-base * 1.625;
+$h4-font-size: $font-size-base * 1.375;
+//$h5-font-size: $font-size-base * 1.25 !default;
+$h6-font-size: $font-size-base * 1.125;
+
+$navbar-toggler-font-size: $font-size-base;
+$navbar-toggler-padding-y: .375rem;
+$navbar-light-color: $dark;
+$navbar-light-hover-color: $dark;
+$navbar-light-active-color: $dark;
+$navbar-light-toggler-border-color: #ced4da;
+
+// Add additional spacers
+$spacers: (
+  0: 0, // default
+  1: $spacer * .25, // default
+  2: $spacer * .5, // default
+  3: $spacer, // default
+  4: $spacer * 1.5, // default
+  5: $spacer * 3, // default
+  6: $spacer * 5, // added
+);
 
 // Import Bootstrap's CSS
 @import 'common-imports';

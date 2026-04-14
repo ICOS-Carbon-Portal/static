@@ -1,6 +1,6 @@
 {
   "name": "bootstrap-theme",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "description": "Project for building our custom boostrap versions.",
   "repository": {
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "npm run css",
-    "css-compile": "sass --style compressed --source-map --embed-sources --no-error-css --load-path=node_modules scss/:assets/css/",
+    "css-compile": "sass --silence-deprecation=import,color-functions,global-builtin --style compressed --source-map --embed-sources --no-error-css --load-path=node_modules scss/:assets/css/",
     "css-lint": "stylelint scss/",
     "css-prefix": "postcss --replace \"assets/css/*.css\" --use autoprefixer --map",
     "css-purge": "purgecss --keyframes --css \"assets/css/*.css\" --content index.html \"node_modules/bootstrap/js/dist/dom/*.js\" \"node_modules/bootstrap/js/dist/{base-component,dropdown,modal,offcanvas}.js\" --output assets/css/",
@@ -21,19 +21,20 @@
   },
   "dependencies": {
     "@popperjs/core": "^2.11.8",
-    "bootstrap": "^5.3.2",
-    "bootstrap-icons": "^1.10.5"
+    "bootstrap": "^5.3.8",
+    "bootstrap-icons": "^1.13.1"
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.15",
-    "nodemon": "^3.0.1",
+    "autoprefixer": "^10.4.22",
+    "baseline-browser-mapping": "^2.9.18",
+    "nodemon": "^3.1.11",
     "npm-run-all": "^4.1.5",
-    "postcss": "^8.4.28",
-    "postcss-cli": "^10.1.0",
-    "purgecss": "^5.0.0",
-    "sass": "^1.64.2",
-    "serve": "^14.2.0",
-    "stylelint": "^15.10.2",
-    "stylelint-config-twbs-bootstrap": "^11.0.1"
+    "postcss": "^8.5.6",
+    "postcss-cli": "^11.0.1",
+    "purgecss": "^7.0.2",
+    "sass": "^1.94.1",
+    "serve": "^14.2.5",
+    "stylelint": "^16.25.0",
+    "stylelint-config-twbs-bootstrap": "^16.1.0"
   }
 }
