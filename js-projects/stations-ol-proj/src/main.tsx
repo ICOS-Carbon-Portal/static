@@ -3,7 +3,8 @@ import Style from "ol/style/Style";
 import {
 	BaseMapFilter,
 	BaseMapId,
-	defaultBaseMaps,
+	EpsgCode,
+	getAvailableBaseMaps,
 	supportedSRIDs,
 	SupportedSRIDs,
 	supportedSRIDsFriendlyNames
@@ -52,7 +53,8 @@ function init(searchParams: URLSearchParams) {
 		}
 
 		const requestedBaseMap = searchParams.get("baseMap");
-		const baseMap = defaultBaseMaps.find(bm => bm.id === requestedBaseMap)?.id ?? olMapSettings.defaultBaseMap;
+		const availableBaseMaps = getAvailableBaseMaps(`EPSG:${srid}` as EpsgCode, olMapSettings.baseMapFilter);
+		const baseMap = availableBaseMaps.find(bm => bm.id === requestedBaseMap)?.id ?? olMapSettings.defaultBaseMap;
 		const partialMapOptions: InitMapOptions = {
 			updateURL: true,
 			baseMap: baseMap as BaseMapId,

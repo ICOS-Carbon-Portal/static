@@ -96,7 +96,7 @@ export default class InitMap {
 		const projection = getProjection(epsgCode)!;
 		this.pointTransformer = getTransformPointFn("EPSG:4326", epsgCode);
 
-		const tileLayers = getBaseMapLayers(mapOptions.baseMap, mapOptions.baseMapFilter);
+		const tileLayers = getBaseMapLayers(mapOptions.baseMap, epsgCode, mapOptions.baseMapFilter);
 		const controls = getDefaultControls(projection);
 		controls.push(new ExportControl(document.getElementById('exportCtrl')!));
 
