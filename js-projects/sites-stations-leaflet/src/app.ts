@@ -2,6 +2,10 @@ import L from 'leaflet';
 import { Query, sparql } from 'icos-cp-backend';
 import config from '../../common/config-urls';
 
+const LM_TILES_BASE_URL = 'https://tiles.fieldsites.se';
+const ESRI_SERVICES_URL = 'https://server.arcgisonline.com/arcgis/rest/services';
+const ESRI_ATTRIBUTION = 'Powered by <a href="https://www.esri.com" target="_blank">Esri</a>';
+
 interface Station {
 	id: string,
 	lat: number,
@@ -36,7 +40,10 @@ function initMap(stations: Station[]) {
 		scrollWheelZoom: window.top === window.self
 	}).setView([62.38583179, 16.3219987], 5);
 
-	var baseMaps = getBaseMaps(18);
+	const leafletPrefix = map.attributionControl.options.prefix as string;
+	map.attributionControl.setPrefix(leafletPrefix.replace('<a ', '<a target="_blank" '));
+
+	var baseMaps = getBaseMaps(map, 18);
 	map.addLayer(baseMaps.Topographic);
 
 	L.control.layers(baseMaps).addTo(map);
@@ -54,26 +61,25 @@ function initMap(stations: Station[]) {
 }
 
 function getLmUrl(layer) {
-	return "//maps.fieldsites.se/lm/open/topowebb-ccby/v1/wmts/1.0.0/"
-		+ layer
-		+ "/default/3857/{z}/{y}/{x}.png";
+	return `${LM_TILES_BASE_URL}/wmts/${layer}/webmercator/{z}/{x}/{y}.png`;
 }
 
-function getBaseMaps(maxZoom) {
-	var topoLM = L.tileLayer(window.location.protocol + getLmUrl('topowebb'), {
-		maxNativeZoom: 14
+function getBaseMaps(map: L.Map, maxZoom: number) {
+	var topoLM = L.tileLayer(getLmUrl('topowebb'), {
+		maxNativeZoom: 17,
+		attribution: '© Lantmäteriet'
 	});
 
-	var topoTonedLM = L.tileLayer(window.location.protocol + getLmUrl('topowebb_nedtonad'), {
-		maxNativeZoom: 14
+	var topoTonedLM = L.tileLayer(getLmUrl('topowebb_nedtonad'), {
+		maxNativeZoom: 17,
+		attribution: '© Lantmäteriet'
 	});
 
-	var image = L.tileLayer(window.location.protocol + '//server.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-		maxZoom
-	});
+	var image = getEsriLayer(map, 'World_Imagery', maxZoom);
 
-	var osm = L.tileLayer(window.location.protocol + "//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-		maxZoom
+	var osm = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+		maxZoom,
+		attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
 	});
 	return {
 			"Topographic": topoLM,
@@ -81,6 +87,38 @@ function getBaseMaps(maxZoom) {
 			"Satellite": image,
 			"OSM": osm
 		}
+}
+
+function getEsriLayer(map: L.Map, serviceName: string, maxZoom: number) {
+	const layer = L.tileLayer(`${ESRI_SERVICES_URL}/${serviceName}/MapServer/tile/{z}/{y}/{x}`, {
+		maxZoom,
+		attribution: ESRI_ATTRIBUTION
+	});
+	loadEsriAttribution(map, layer, serviceName);
+	return layer;
+}
+
+// Esri requires showing the data providers from the service's copyrightText, which can change
+function loadEsriAttribution(map: L.Map, layer: L.TileLayer, serviceName: string) {
+	fetch(`${ESRI_SERVICES_URL}/${serviceName}/MapServer?f=json`)
+		.then(response => response.json())
+		.then(service => {
+			if (!service.copyrightText) return;
+
+			const attribution = `${ESRI_ATTRIBUTION} | ${escapeHtml(service.copyrightText)}`;
+			if (map.hasLayer(layer)) {
+				map.attributionControl.removeAttribution(layer.options.attribution!);
+				map.attributionControl.addAttribution(attribution);
+			}
+			layer.options.attribution = attribution;
+		})
+		.catch(error => console.error(`Could not load attribution for ${serviceName}`, error));
+}
+
+function escapeHtml(text: string) {
+	const element = document.createElement('span');
+	element.textContent = text;
+	return element.innerHTML;
 }
 
 function stationQuery(): Query<"id" | "name" | "lon" | "lat" | "station", never> {
